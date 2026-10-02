@@ -70,7 +70,7 @@ label.chk input{width:auto}
 .vact{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
 .okpill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
 .sample{white-space:pre-wrap;font:inherit;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:40vh;overflow:auto}
-#ovBulk{z-index:11}
+#ovBulk,#ovGreet{z-index:11}
 .visit[style*="--pc"]{border-left:5px solid var(--pc)}
 .visit[style*="--pc"]:hover{border-left-color:var(--pc)}
 .pdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc,var(--muted));margin-right:6px;vertical-align:-1px;flex:none}
@@ -291,6 +291,12 @@ tr.past td{opacity:.6}
         <label class="chk"><input type="checkbox" id="ndMail"> Μόνο με email</label>
         <button type="button" class="btn" id="xNamedays">Excel</button>
       </div>
+      <div class="toolbar" id="ndSelBar">
+        <button type="button" class="btn ghost sm" id="ndAll">Επιλογή όλων</button>
+        <button type="button" class="btn ghost sm" id="ndNone">Καμία</button>
+        <label class="chk"><input type="checkbox" id="ndHideSent"> Απόκρυψη όσων έλαβαν ευχές</label>
+        <button type="button" class="btn primary sm" id="ndGreet">Αποστολή ευχών</button>
+      </div>
       <div class="stats" id="ndStats"></div>
       <div id="ndBody"></div>
     </div>
@@ -464,6 +470,27 @@ tr.past td{opacity:.6}
     <div class="actions">
       <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
       <button type="button" class="btn primary" id="bulkSend">Αποστολή</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovGreet" hidden>
+  <div class="panel wide">
+    <h3>Ευχές ονομαστικής εορτής</h3>
+    <p class="hint">Κάθε εορτάζων λαμβάνει δικό του email. Τα πεδία <b>{Όνομα}</b>, <b>{Επώνυμο}</b>, <b>{Εορτή}</b>, <b>{Ημερομηνία}</b> συμπληρώνονται αυτόματα. Ελέγξτε το κείμενο και τη λίστα («Προβολή») πριν την αποστολή.</p>
+    <div class="grid">
+      <div class="field full"><label for="gSubj">Θέμα</label><input id="gSubj"></div>
+      <div class="field full"><label for="gBody">Κείμενο</label><textarea id="gBody" style="min-height:200px"></textarea>
+        <div class="actions" style="margin-top:6px;justify-content:flex-start"><button type="button" class="btn ghost sm" id="gReset">Επαναφορά προτύπου</button></div></div>
+    </div>
+    <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Δείγμα όπως θα φτάσει</summary><pre id="gSample" class="sample"></pre></details>
+    <h4 style="margin:14px 0 4px" id="gCount"></h4>
+    <div id="gList" class="list"></div>
+    <div class="err" id="gErr" hidden></div>
+    <p class="hint" id="gStatus" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn primary" id="gSend">Αποστολή</button>
     </div>
   </div>
 </div>
@@ -992,7 +1019,7 @@ $("xMasters").onclick=()=>{const sp=$("sp").value;
   exportXlsx("sevasmioi",[["Σεβάσμιοι",["Αρ.","Στοά","Επαρχία","Επώνυμο","Όνομα","Κινητό","Email","Έτος"],masterRows().filter(r=>!sp||r.province===sp).map(r=>[r.lodge.number,r.lodge.name,r.province,r.m?.surname||"",r.m?.name||"",r.m?.mobile||"",r.m?.email||"",r.m?.year||""])]],$("xMasters"))};
 
 /* ---------- Εορτολόγιο: name days of active members (editors only) ---------- */
-let namedays=[],ndIndex=null;
+let namedays=[],ndIndex=null,ndSel=new Set(),ndSeen=new Set(),greetLog=(()=>{try{return JSON.parse(localStorage.getItem("lvr-greet")||"{}")}catch(e){return {}}})();
 // Orthodox Easter (Gregorian date), valid 1900–2099
 function orthodoxEaster(y){const a=y%4,b=y%7,c=y%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7,mo=Math.floor((d+e+114)/31),da=((d+e+114)%31)+1;const t=new Date(y,mo-1,da);t.setDate(t.getDate()+13);return t}
 const isoOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -1020,25 +1047,40 @@ function celebrants(from,to){
 function ndDefaults(){if(!$("ndFrom").value)$("ndFrom").value=todayISO();if(!$("ndTo").value){const d=parseISO(todayISO());d.setDate(d.getDate()+30);$("ndTo").value=isoOf(d)}}
 function renderNamedays(){
   const body=$("ndBody");if(!body)return;
-  if(!namedays.length){$("ndStats").innerHTML="";body.innerHTML=`<div class="empty">Δεν έχει φορτωθεί ακόμη το εορτολόγιο.</div>`;return}
+  if(!namedays.length){$("ndStats").innerHTML="";body.innerHTML=`<div class="empty">Δεν έχει φορτωθεί ακόμη το εορτολόγιο.</div>`;$("ndSelBar").hidden=true;return}
   ndDefaults();
   const from=$("ndFrom").value,to=$("ndTo").value<from?from:$("ndTo").value,onlyMail=$("ndMail").checked;
-  const list=celebrants(from,to).map(g=>({...g,members:g.members.filter(m=>!onlyMail||(m.e||[]).length).sort((a,b)=>a.s.localeCompare(b.s,"el"))})).filter(g=>g.members.length);
+  const hideSent=$("ndHideSent").checked;
+  const list=celebrants(from,to).map(g=>({...g,members:g.members.filter(m=>(!onlyMail||(m.e||[]).length)&&!(hideSent&&greetLog[greetKey(m,g.date)])).sort((a,b)=>a.s.localeCompare(b.s,"el"))})).filter(g=>g.members.length);
+  ndVisible=[];list.forEach(g=>g.members.forEach(m=>{if(!greetMail(m))return;const k=greetKey(m,g.date);ndVisible.push({k,m,date:g.date,label:g.label});
+    if(!ndSeen.has(k)){ndSeen.add(k);if(!greetLog[k])ndSel.add(k)}}));
   const people=list.reduce((n,g)=>n+g.members.length,0),withMail=list.reduce((n,g)=>n+g.members.filter(m=>(m.e||[]).length).length,0);
   const noDate=activeMembers().filter(m=>{const it=ndMap().get(ndKey(m.f));return !it||(!it.md&&it.easter==null)});
   $("ndStats").innerHTML=`<span><b>${people}</b> εορτάζοντες</span><span><b>${new Set(list.map(g=>g.date)).size}</b> ημέρες</span><span><b>${withMail}</b> με email</span><span class="${noDate.length?"warn":""}"><b>${noDate.length}</b> μέλη χωρίς ημερομηνία εορτής</span>`;
   const byDate=new Map();list.forEach(g=>{if(!byDate.has(g.date))byDate.set(g.date,[]);byDate.get(g.date).push(g)});
   body.innerHTML=(list.length?[...byDate].map(([d,gs])=>`<section class="month"><h2>${esc(dayStr(d))}${d===todayISO()?' <small>Σήμερα</small>':""}</h2>${gs.map(g=>`<div class="psec" style="margin-top:8px"><h3 style="font-size:18px">${esc(g.label)} <small class="meta">${g.members.length} ${g.members.length===1?"μέλος":"μέλη"}${g.movable?" · κινητή εορτή":""}</small></h3>
-      <div class="tablewrap"><table><thead><tr><th>Ονοματεπώνυμο</th><th>Στοές</th><th>Κινητό</th><th>Email</th></tr></thead><tbody>${g.members.map(m=>`<tr><td><b>${esc(m.s)}</b> ${esc(m.f)}</td><td class="meta">${esc(memberLodges(m))}</td><td style="white-space:nowrap">${(m.m||[])[0]?`<a href="tel:${esc(m.m[0])}">${esc(m.m[0])}</a>`:'<span class="meta">—</span>'}</td><td>${(m.e||[])[0]?esc(m.e[0]):'<span class="meta">—</span>'}</td></tr>`).join("")}</tbody></table></div></div>`).join("")}</section>`).join("")
+      <div class="tablewrap"><table><thead><tr><th style="width:28px">${g.members.some(greetMail)?`<input type="checkbox" data-ndg="${esc(g.date+"|"+g.label)}" aria-label="Επιλογή όλων: ${esc(g.label)}" ${g.members.filter(greetMail).every(m=>ndSel.has(greetKey(m,g.date)))?"checked":""}>`:""}</th><th>Ονοματεπώνυμο</th><th>Στοές</th><th>Κινητό</th><th>Email</th></tr></thead><tbody>${g.members.map(m=>{const k=greetKey(m,g.date),sent=greetLog[k];return `<tr><td>${greetMail(m)?`<input type="checkbox" data-ndk="${esc(k)}" aria-label="Επιλογή ${esc(m.s+" "+m.f)}" ${ndSel.has(k)?"checked":""}>`:""}</td><td><b>${esc(m.s)}</b> ${esc(m.f)}${sent?` <span class="okpill" title="Στάλθηκαν ευχές ${esc(fmtDate(sent))}">✓ Ευχές</span>`:""}</td><td class="meta">${esc(memberLodges(m))}</td><td style="white-space:nowrap">${(m.m||[])[0]?`<a href="tel:${esc(m.m[0])}">${esc(m.m[0])}</a>`:'<span class="meta">—</span>'}</td><td>${(m.e||[])[0]?esc(m.e[0]):'<span class="meta">—</span>'}</td></tr>`}).join("")}</tbody></table></div></div>`).join("")}</section>`).join("")
     :`<div class="empty">Κανένα μέλος δεν γιορτάζει σε αυτό το διάστημα.</div>`)+
     (noDate.length?`<details style="margin-top:18px"><summary class="hint" style="cursor:pointer">Μέλη χωρίς ημερομηνία εορτής (${noDate.length}) — ονόματα που δεν αντιστοιχίστηκαν στο εορτολόγιο</summary><p class="meta" style="margin-top:8px">${[...new Set(noDate.map(m=>(m.f||"").split(/\s+/)[0]))].sort((a,b)=>a.localeCompare(b,"el")).map(esc).join(" · ")}</p></details>`:"");
+  body.querySelectorAll("[data-ndk]").forEach(c=>c.onchange=()=>{c.checked?ndSel.add(c.dataset.ndk):ndSel.delete(c.dataset.ndk);renderNamedays()});
+  body.querySelectorAll("[data-ndg]").forEach(c=>c.onchange=()=>{ndVisible.filter(v=>v.date+"|"+v.label===c.dataset.ndg).forEach(v=>c.checked?ndSel.add(v.k):ndSel.delete(v.k));renderNamedays()});
+  const n=ndPicked().length;$("ndGreet").textContent=`Αποστολή ευχών (${n})`;$("ndGreet").disabled=!n;
+  $("ndSelBar").hidden=!ndVisible.length&&!hideSent;
 }
-["ndFrom","ndTo","ndMail"].forEach(id=>$(id).addEventListener("input",renderNamedays));
+let ndVisible=[];
+// One greeting per member and feast date; the key is also the field name in greetings/log
+const greetKey=(m,date)=>`${m.id}_${date}`;
+const greetMail=m=>(m.e||[]).find(x=>EMAIL_RE.test(x))||"";
+const ndPicked=()=>ndVisible.filter(v=>ndSel.has(v.k));
+["ndFrom","ndTo","ndMail","ndHideSent"].forEach(id=>$(id).addEventListener("input",renderNamedays));
+$("ndAll").onclick=()=>{ndVisible.forEach(v=>ndSel.add(v.k));renderNamedays()};
+$("ndNone").onclick=()=>{ndVisible.forEach(v=>ndSel.delete(v.k));renderNamedays()};
+$("ndGreet").onclick=()=>openGreet(ndPicked());
 $("xNamedays").onclick=()=>{
   ndDefaults();const from=$("ndFrom").value,to=$("ndTo").value<from?from:$("ndTo").value,rows=[];
-  celebrants(from,to).forEach(g=>g.members.filter(m=>!$("ndMail").checked||(m.e||[]).length).sort((a,b)=>a.s.localeCompare(b.s,"el")).forEach(m=>rows.push([fmtDate(g.date),DAYS[parseISO(g.date).getDay()],g.label,m.s,m.f,memberLodges(m),(m.e||[])[0]||"",(m.m||[])[0]||""])));
+  celebrants(from,to).forEach(g=>g.members.filter(m=>!$("ndMail").checked||(m.e||[]).length).sort((a,b)=>a.s.localeCompare(b.s,"el")).forEach(m=>rows.push([fmtDate(g.date),DAYS[parseISO(g.date).getDay()],g.label,m.s,m.f,memberLodges(m),(m.e||[])[0]||"",(m.m||[])[0]||"",greetLog[greetKey(m,g.date)]?fmtDate(greetLog[greetKey(m,g.date)]):""])));
   if(!rows.length){showErr("xErr","Κανένα μέλος δεν γιορτάζει σε αυτό το διάστημα.");return}
-  exportXlsx(`eortazontes-${from}-${to}`,[["Εορτάζοντες",["Ημερομηνία","Ημέρα","Εορτή","Επώνυμο","Όνομα","Στοές","Email","Κινητό"],rows]],$("xNamedays"));
+  exportXlsx(`eortazontes-${from}-${to}`,[["Εορτάζοντες",["Ημερομηνία","Ημέρα","Εορτή","Επώνυμο","Όνομα","Στοές","Email","Κινητό","Ευχές"],rows]],$("xNamedays"));
 };
 
 /* ---------- Πρότζεκτ ΜΔ: new lodge, new body, other projects (editors only) ---------- */
@@ -1509,6 +1551,62 @@ $("bulkSend").onclick=async()=>{
   $("bulkStatus").textContent=`✓ Στάλθηκαν ${sent} από ${todo.length} email.`;toast(`Στάλθηκαν ${sent} email`);renderBulk();
 };
 
+// Name-day greetings: one email per celebrant, sent one after another after a confirming second click
+const GREET_SUBJ="Χρόνια πολλά για την ονομαστική σας εορτή";
+const greetBodyDef=()=>`Αγαπητέ Αδελφέ,\n\nΜε την ευκαιρία της ονομαστικής σας εορτής, σας εύχομαι ολόψυχα Χρόνια Πολλά, με υγεία, χαρά και κάθε ευτυχία για εσάς και την οικογένειά σας, και δύναμη να συνεχίζετε δημιουργικά το Τεκτονικό μας έργο.\n\n${SIGN}`;
+let greetItems=[],greetTimer=0;
+function greetFill(t,it){return t.replace(/\{Όνομα\}/g,it.m.f||"").replace(/\{Επώνυμο\}/g,it.m.s||"").replace(/\{Εορτή\}/g,it.label||"").replace(/\{Ημερομηνία\}/g,dayStr(it.date))}
+const greetContent=it=>({subject:greetFill($("gSubj").value,it),body:greetFill($("gBody").value,it)});
+function greetSaveTpl(){try{localStorage.setItem("lvr-greet-tpl",JSON.stringify({s:$("gSubj").value,b:$("gBody").value}))}catch(e){}}
+async function markGreet(it){
+  const day=todayISO();greetLog={...greetLog,[it.k]:day};ndSel.delete(it.k);
+  if(db){const ref=db.doc("greetings/log");try{await ref.update({[it.k]:day})}catch(e){try{await ref.set({...greetLog})}catch(e2){toast("Η καταγραφή των ευχών απέτυχε")}}}
+  else{try{localStorage.setItem("lvr-greet",JSON.stringify(greetLog))}catch(e){}}
+  renderNamedays();
+}
+function greetDisarm(){clearTimeout(greetTimer);delete $("gSend").dataset.armed;const n=greetItems.filter(g=>g.on&&!g.done).length;$("gSend").textContent=`Αποστολή σε ${n} ${n===1?"εορτάζοντα":"εορτάζοντες"}`;$("gSend").disabled=!n}
+function renderGreet(){
+  const n=greetItems.filter(g=>g.on).length;$("gCount").textContent=`Παραλήπτες: ${n} από ${greetItems.length}`;
+  $("gList").innerHTML=greetItems.map((g,i)=>`<div class="reprow"><label class="chk" style="color:var(--ink);white-space:normal"><input type="checkbox" data-gi="${i}" ${g.on?"checked":""} ${g.done?"disabled":""}> <span><b>${esc(g.m.s)} ${esc(g.m.f)}</b> <span class="meta">· ${esc(g.label)} ${esc(fmtDate(g.date))} · ${esc(g.email)}</span>${greetLog[g.k]&&!g.done?` <span class="pill-warn">έλαβε ήδη ευχές ${esc(fmtDate(greetLog[g.k]))}</span>`:""}</span></label>
+    <span>${g.done?'<span class="okpill">✓ Στάλθηκε</span>':g.err?`<span class="pill-warn">${esc(g.err)}</span>`:""} <button type="button" class="btn ghost sm" data-gv="${i}">Προβολή</button></span></div>`).join("");
+  $("gList").querySelectorAll("[data-gi]").forEach(c=>c.onchange=()=>{greetItems[c.dataset.gi].on=c.checked;renderGreet()});
+  $("gList").querySelectorAll("[data-gv]").forEach(c=>c.onclick=()=>{const g=greetItems[c.dataset.gv],x=greetContent(g);
+    openMail({title:"Ευχές ονομαστικής εορτής",to:g.email,subject:x.subject,body:x.body,hint:`${g.m.s} ${g.m.f} · ${g.label}, ${dayStr(g.date)}`,onSent:async()=>{g.done=true;await markGreet(g);renderGreet()}})});
+  const s=greetItems[0];$("gSample").textContent=s?(x=>`Προς: ${s.email}\nΘέμα: ${x.subject}\n\n${x.body}`)(greetContent(s)):"";
+  greetDisarm();
+}
+function openGreet(picked){
+  if(!picked.length)return;
+  let tpl=null;try{tpl=JSON.parse(localStorage.getItem("lvr-greet-tpl")||"null")}catch(e){}
+  $("gSubj").value=tpl?.s||GREET_SUBJ;$("gBody").value=tpl?.b||greetBodyDef();
+  greetItems=picked.map(v=>({...v,email:greetMail(v.m),on:true,done:false,err:""}));
+  $("gErr").hidden=true;$("gStatus").textContent="";renderGreet();openOv("ovGreet");
+  getMcp().then(m=>{if(!m){$("gSend").disabled=true;showErr("gErr","Η μαζική αποστολή γίνεται μέσω Gmail και δεν είναι διαθέσιμη εδώ. Στείλτε από «Προβολή» για κάθε εορτάζοντα.")}});
+}
+["gSubj","gBody"].forEach(id=>$(id).addEventListener("input",()=>{greetSaveTpl();renderGreet()}));
+$("gReset").onclick=()=>{$("gSubj").value=GREET_SUBJ;$("gBody").value=greetBodyDef();try{localStorage.removeItem("lvr-greet-tpl")}catch(e){}renderGreet()};
+$("gSend").onclick=async()=>{
+  const todo=greetItems.filter(g=>g.on&&!g.done);if(!todo.length)return;
+  if(!$("gSubj").value.trim()||!$("gBody").value.trim()){showErr("gErr","Συμπληρώστε θέμα και κείμενο.");return}
+  if(!$("gSend").dataset.armed){$("gSend").dataset.armed="1";$("gSend").textContent=`Επιβεβαίωση: αποστολή ${todo.length} email`;clearTimeout(greetTimer);greetTimer=setTimeout(greetDisarm,6000);return}
+  clearTimeout(greetTimer);delete $("gSend").dataset.armed;$("gSend").disabled=true;$("gErr").hidden=true;
+  const m=await getMcp();if(!m){showErr("gErr","Η αποστολή μέσω Gmail δεν είναι διαθέσιμη εδώ.");return}
+  let sent=0;
+  for(const g of todo){
+    $("gStatus").textContent=`Αποστολή ${sent+1} από ${todo.length}: ${g.m.s} ${g.m.f}…`;
+    const x=greetContent(g);
+    try{
+      await m.callTool("Gmail","send_message",{to:[g.email],subject:x.subject,body:x.body});
+      g.done=true;g.err="";sent++;await markGreet(g);
+    }catch(e){
+      g.err=e?.code==="tool_error"?"Απορρίφθηκε":"Δεν στάλθηκε";renderGreet();
+      if(e?.code!=="tool_error"){showErr("gErr",(GMAIL_ERR[e?.code]||"Η αποστολή διακόπηκε. Για τον τελευταίο εορτάζοντα ελέγξτε τα «Απεσταλμένα» στο Gmail πριν το στείλετε ξανά.")+` Στάλθηκαν ${sent} από ${todo.length}.`);break}
+    }
+    renderGreet();
+  }
+  $("gStatus").textContent=`✓ Στάλθηκαν ${sent} από ${todo.length} email ευχών.`;toast(`Στάλθηκαν ${sent} email ευχών`);renderGreet();
+};
+
 // Publish: the province's installations in a date range, with their representatives
 function pubRows(){
   const prov=$("pubProv").value,from=$("pubFrom").value,to=$("pubTo").value;
@@ -1856,6 +1954,7 @@ render();
   // Rep contacts are readable by editors only; viewers simply get none
   // Projects are editors-only: a refused read hides the tab
   db.collection("projects").onSnapshot(s=>{projects=s.docs.map(d=>({id:d.id,...d.data()}));renderProjects()},()=>{projects=[];$("tab-projects").hidden=true;if(!$("view-projects").hidden)showTab("visits")});
+  db.doc("greetings/log").onSnapshot(d=>{greetLog=(d.exists&&d.data())||{};renderNamedays()},()=>{greetLog={}});
   db.doc("namedays/all").onSnapshot(d=>{namedays=(d.exists&&d.data().items)||[];ndIndex=null;render()},()=>{namedays=[];ndIndex=null;render()});
   db.doc("officers/all").onSnapshot(d=>{const x=(d.exists&&d.data())||{};officers=x.items||[];officerHonors=x.honors||[];render()},()=>{officers=[];officerHonors=[];render()});
   db.doc("masters/all").onSnapshot(d=>{masters=(d.exists&&d.data().items)||[];render()},()=>{masters=[];render()});
