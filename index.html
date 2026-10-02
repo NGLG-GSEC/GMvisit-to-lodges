@@ -417,7 +417,7 @@ tr.past td{opacity:.6}
 const MONTHS=["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
 const DAYS=["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"];
 const $=id=>document.getElementById(id);
-let members=[], lodges=[], editingLodge=null, visits=[], reps=[], provinces=[], db=null, canWrite=true, editingVisit=null, editingRep=null, editingProv=null, importMode=null, confirmFn=null;
+let repsRaw=[], repContacts={}, members=[], lodges=[], editingLodge=null, visits=[], reps=[], provinces=[], db=null, canWrite=true, editingVisit=null, editingRep=null, editingProv=null, importMode=null, confirmFn=null;
 const provByShort=s=>provinces.find(p=>p.short===s);
 const lodgeByNo=n=>lodges.find(l=>String(l.number)===String(n).trim());
 const lodgeSortKey=l=>{const n=parseInt(l.number,10);return isNaN(n)?100000:n};
@@ -1104,7 +1104,14 @@ async function applySeedUpdates(done){
 async function save(col,id,data,quiet){
   if(!canWrite){toast("Δεν έχετε δικαίωμα επεξεργασίας");return false}
   const arr=col==="visits"?visits:col==="reps"?reps:col==="lodges"?lodges:provinces,i=arr.findIndex(x=>x.id===id);
-  if(db){try{await db.collection(col).doc(id).set(data)}catch(e){
+  if(db){try{
+    if(col==="reps"){
+      // Contact details live in an editors-only document; the rep record keeps name, office, rank and year
+      const {email="",mobile="",memberId="",...pub}=data,c={email,mobile,memberId},ref=db.doc("repContacts/all");
+      await db.collection("reps").doc(id).set(pub);
+      try{await ref.update({[id]:c})}catch(e){if(e?.code==="invalid_argument")await ref.set({[id]:c});else throw e}
+      repContacts={...repContacts,[id]:c};
+    }else await db.collection(col).doc(id).set(data)}catch(e){
     if(e?.code==="invalid_argument"){canWrite=false;renderEditState()}
     toast(e?.code==="quota_exceeded"?"Ο χώρος αποθήκευσης γέμισε":"Η αποθήκευση απέτυχε");return false}}
   if(i>=0)arr[i]={id,...data};else arr.push({id,...data});
@@ -1112,11 +1119,13 @@ async function save(col,id,data,quiet){
   if(!quiet)render();return true;
 }
 async function remove(col,id){
-  if(db){try{await db.collection(col).doc(id).delete()}catch(e){toast("Η διαγραφή απέτυχε");return false}}
+  if(db){try{await db.collection(col).doc(id).delete()}catch(e){toast("Η διαγραφή απέτυχε");return false}
+    if(col==="reps"&&repContacts[id]){try{await db.doc("repContacts/all").update({[id]:null})}catch(e){}}}
   if(col==="visits")visits=visits.filter(x=>x.id!==id);else if(col==="reps")reps=reps.filter(x=>x.id!==id);else if(col==="lodges")lodges=lodges.filter(x=>x.id!==id);else provinces=provinces.filter(x=>x.id!==id);
   if(!db)persistLocal();
   render();return true;
 }
+function mergeReps(){reps=repsRaw.map(r=>{const c=repContacts[r.id];return c&&typeof c==="object"?{...r,...c}:r})}
 function renderEditState(){$("tab-members").hidden=!canWrite;if(!canWrite&&!$("view-members").hidden)showTab("visits");["addVisit","importVisits","pubBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
 
 render();
@@ -1149,7 +1158,9 @@ render();
   // Apply pending SEED.updates once the first snapshots of lodges, visits and settings/seed are in.
   const ready=new Set(),mark=k=>{ready.add(k);if(ready.size===3&&!mark.ran){mark.ran=true;applySeedUpdates(seedApplied).then(async added=>{
     if(added.length){try{await db.doc("settings/seed").set({applied:[...seedApplied,...added]})}catch(e){}}})}};
-  sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>reps=a);sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});// Members are readable by editors only: a refused read hides the tab instead of flagging a broken connection
+  sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>{repsRaw=a;mergeReps()});
+  // Rep contacts are readable by editors only; viewers simply get none
+  db.doc("repContacts/all").onSnapshot(d=>{repContacts=(d.exists&&d.data())||{};mergeReps();render()},()=>{repContacts={};mergeReps();render()});sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});// Members are readable by editors only: a refused read hides the tab instead of flagging a broken connection
   db.collection("members").onSnapshot(s=>{membersDenied=false;members=s.docs.map(d=>d.data()).sort((x,y)=>(x.n??0)-(y.n??0)).flatMap(d=>d.items||[]);render()},
     ()=>{membersDenied=true;members=[];$("tab-members").hidden=true;if(!$("view-members").hidden)showTab("visits");render()});
   db.doc("settings/rankmap").onSnapshot(d=>{rankMap=(d.exists&&d.data().map)||{};render()},()=>{});
