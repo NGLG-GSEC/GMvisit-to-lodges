@@ -254,6 +254,8 @@ td .num{font-variant-numeric:tabular-nums}
       <div class="field"><label for="lNo">Αριθμός</label><input id="lNo" required></div>
       <div class="field"><label for="lName">Όνομα</label><input id="lName" required></div>
       <div class="field full"><label for="lProv">Επαρχιακή Μεγάλη Στοά</label><select id="lProv"></select></div>
+      <div class="field full"><label for="lLoc">Τόπος συνεδριάσεων</label><input id="lLoc" list="locList" placeholder="π.χ. Τεκτονικόν Μέγαρον, Ερεσού 38, Αθήνα">
+        <p class="hint">Συμπληρώνεται αυτόματα στις νέες επισκέψεις της Στοάς.</p></div>
     </div>
     <div class="err" id="lErr" hidden></div>
     <div class="actions">
@@ -366,6 +368,7 @@ const DEFAULT_RANKS={
  "Πρόεδρος Συμβουλίου Μεγάλης Φιλανθρωπίας":1,"Πρόεδρος Μεγάλης Φιλανθρωπίας":1
 };
 let rankMap={}; // office -> index, overrides DEFAULT_RANKS
+let seedApplied=[]; // ids of SEED.updates already merged into the data
 const baseOffices=r=>(r.office||"").split(" · ").map(o=>o.replace(/\s*\(\d{4}\)\s*$/,"").replace(/^Πρώην\s+/,"").trim()).filter(Boolean);
 const officeRank=o=>o in rankMap?rankMap[o]:(o in DEFAULT_RANKS?DEFAULT_RANKS[o]:0);
 const derivedRank=r=>{const os=baseOffices(r);return os.length?RANKS[Math.max(...os.map(officeRank))]:""};
@@ -393,7 +396,7 @@ try{const t=localStorage.getItem("lvr-tab");if(["reps","provs","lodges"].include
 function render(){renderFilters();renderVisits();renderReps();renderProvs();renderLodges()}
 function renderFilters(){
   const provs=[...new Set([...sortedProvs().map(p=>p.short),...visits.map(v=>v.province).filter(Boolean)])];
-  const locs=[...new Set(visits.map(v=>v.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
+  const locs=[...new Set([...lodges,...visits].map(x=>x.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
   const fp=$("fProv"),cur=fp.value;
   fp.innerHTML='<option value="">Όλες οι Επαρχίες</option>'+provs.map(p=>`<option>${esc(p)}</option>`).join("");fp.value=provs.includes(cur)?cur:"";
   const fr=$("fRep"),curR=fr.value;
@@ -466,11 +469,11 @@ function renderLodges(){
   const q=$("lq").value.trim().toLowerCase(),pf=$("lp").value,body=$("lodgesBody"),today=todayISO();
   if(!lodges.length){body.innerHTML=`<div class="empty">Το Μητρώο Στοών είναι κενό.</div>`;$("lodgeStats").innerHTML="";return}
   const next={};visits.filter(v=>v.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).forEach(v=>{if(!next[v.number])next[v.number]=v});
-  const list=sortedLodges().filter(l=>(!pf||l.province===pf)&&(!q||`${l.number} ${l.name}`.toLowerCase().includes(q)));
+  const list=sortedLodges().filter(l=>(!pf||l.province===pf)&&(!q||`${l.number} ${l.name} ${l.location||""}`.toLowerCase().includes(q)));
   $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length} Στοές</span>`;
   const fmt=d=>{const x=parseISO(d);return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`};
   body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αρ.</th><th>Στοά</th><th>Επαρχία</th><th>Επόμενη επίσκεψη</th><th></th></tr></thead><tbody>${list.map(l=>{const v=next[l.number];return `<tr>
-    <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}</td><td class="meta">${esc(l.province||"—")}</td>
+    <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}${l.location?`<div class="meta">${esc(l.location)}</div>`:""}</td><td class="meta">${esc(l.province||"—")}</td>
     <td>${v?`${fmt(v.date)}${repById(v.repId)?`<div class="meta">${esc(repLabel(repById(v.repId)))}</div>`:`<div><span class="pill-warn">Χωρίς εκπρόσωπο</span></div>`}`:`<span class="meta">—</span>`}</td>
     <td style="white-space:nowrap">${canWrite?`<button type="button" class="btn ghost sm" data-lv="${esc(l.id)}">+ Επίσκεψη</button> <button type="button" class="btn ghost sm" data-le="${esc(l.id)}">Επεξεργασία</button>`:""}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="empty">Καμία Στοά δεν ταιριάζει με την αναζήτηση.</div>`;
   body.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{openVisit(null);fillFromLodge(lodges.find(l=>l.id===b.dataset.lv))});
@@ -479,13 +482,13 @@ function renderLodges(){
 ["lq","lp"].forEach(id=>$(id).addEventListener("input",renderLodges));
 function openLodge(l){
   editingLodge=l||null;$("lodgeTitle").textContent=l?"Επεξεργασία Στοάς":"Νέα Στοά";
-  $("lNo").value=l?.number||"";$("lName").value=l?.name||"";$("lProv").innerHTML=provOptions(l?.province||"","— Χωρίς Επαρχία —");$("lProv").value=l?.province||"";
+  $("lNo").value=l?.number||"";$("lName").value=l?.name||"";$("lProv").innerHTML=provOptions(l?.province||"","— Χωρίς Επαρχία —");$("lProv").value=l?.province||"";$("lLoc").value=l?.location||"";
   $("lDel").hidden=!l;$("lErr").hidden=true;openOv("ovLodge");
 }
 $("addLodge").onclick=()=>openLodge(null);
 $("formLodge").addEventListener("submit",async e=>{
   e.preventDefault();
-  const data={number:$("lNo").value.trim(),name:clean($("lName").value),province:$("lProv").value};
+  const data={number:$("lNo").value.trim(),name:clean($("lName").value),province:$("lProv").value,location:$("lLoc").value.trim()};
   if(!data.number||!data.name){showErr("lErr","Συμπληρώστε αριθμό και όνομα.");return}
   const dup=lodgeByNo(data.number);if(dup&&dup.id!==editingLodge?.id){showErr("lErr",`Ο αριθμός ${data.number} ανήκει ήδη στη Στοά ${dup.name}.`);return}
   const id=editingLodge?.id||("l-"+(/^[0-9A-Za-z]+$/.test(data.number)?data.number:newId("x")));
@@ -538,7 +541,7 @@ function openVisit(v){
   [...$("formVisit").elements].forEach(el=>{if(el.tagName!=="BUTTON"||el.type==="submit"||el.id==="vDel")el.disabled=!canWrite});
   openOv("ovVisit");
 }
-function fillFromLodge(l){if(!l)return;$("vLodge").value=l.name;$("vNo").value=l.number;if(l.province){if(![...$("vProv").options].some(o=>o.value===l.province))$("vProv").insertAdjacentHTML("beforeend",`<option>${esc(l.province)}</option>`);$("vProv").value=l.province;updProvMail()}}
+function fillFromLodge(l){if(!l)return;$("vLodge").value=l.name;$("vNo").value=l.number;if(l.location&&!$("vLoc").value.trim())$("vLoc").value=l.location;if(l.province){if(![...$("vProv").options].some(o=>o.value===l.province))$("vProv").insertAdjacentHTML("beforeend",`<option>${esc(l.province)}</option>`);$("vProv").value=l.province;updProvMail()}}
 $("vLodge").addEventListener("input",()=>{const m=$("vLodge").value.match(/^\s*(\S+)\s*·\s*(.+)$/);if(m&&lodgeByNo(m[1]))fillFromLodge(lodgeByNo(m[1]));else if(/^\s*\d+\s*$/.test($("vLodge").value)&&lodgeByNo($("vLodge").value)&&!$("vLodge").matches(":focus"))fillFromLodge(lodgeByNo($("vLodge").value))});
 $("vLodge").addEventListener("change",()=>{const v=$("vLodge").value.trim();if(/^\S+$/.test(v)&&lodgeByNo(v))fillFromLodge(lodgeByNo(v))});
 $("vNo").addEventListener("change",()=>{const l=lodgeByNo($("vNo").value);if(l)fillFromLodge(l)});
@@ -617,7 +620,7 @@ function parseVisitLine(line){
   location=location.replace(/\.$/,"").trim();
   if(!lodge)return null;
   const reg=number?lodgeByNo(number):null;
-  return {date,lodge:reg?reg.name:lodge,number,location,province:reg?.province||"",repId:"",notes:""};
+  return {date,lodge:reg?reg.name:lodge,number,location:location||reg?.location||"",province:reg?.province||"",repId:"",notes:""};
 }
 function parseRepLine(line){
   const parts=line.split(/\t|;|\|/).map(s=>s.trim());
@@ -758,13 +761,28 @@ function newId(p){return p+Date.now().toString(36)+Math.random().toString(36).sl
 function strip(o){const {id,...r}=o;return r}
 function showErr(id,msg){$(id).textContent=msg;$(id).hidden=false}
 const LKEY="lvr-data-v1";
-function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
+function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
 function loadLocal(){
   let d=null;try{d=JSON.parse(localStorage.getItem(LKEY)||"null")}catch(e){}
   const seed=window.SEED||{};
   visits=d?.visits||seed.visits||[];reps=d?.reps||seed.reps||[];provinces=d?.provinces||seed.provinces||[];
-  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};
+  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];
   if(!d)persistLocal();
+}
+// Merges SEED.updates not yet applied: new lodges, lodge locations (only where empty)
+// and visits (skipped if the same id or the same lodge & date already exists).
+// Returns the ids of the updates that were fully applied.
+async function applySeedUpdates(done){
+  const todo=(window.SEED?.updates||[]).filter(u=>!done.includes(u.id)),ok=[];
+  if(!todo.length||!canWrite)return ok;
+  for(const u of todo){
+    let good=true;
+    for(const l of u.lodges||[])if(!lodgeByNo(l.number))good=await save("lodges",l.id,strip(l),true)&&good;
+    for(const [no,loc] of Object.entries(u.lodgeLocations||{})){const l=lodgeByNo(no);if(l&&!l.location)good=await save("lodges",l.id,{...strip(l),location:loc},true)&&good}
+    for(const v of u.visits||[])if(!visits.some(x=>x.id===v.id||(String(x.number)===v.number&&x.date===v.date)))good=await save("visits",v.id,strip(v),true)&&good;
+    if(good)ok.push(u.id);
+  }
+  render();return ok;
 }
 async function save(col,id,data,quiet){
   if(!canWrite){toast("Δεν έχετε δικαίωμα επεξεργασίας");return false}
@@ -790,17 +808,19 @@ render();
   db=c?await c.use("db"):null;
   if(!db){
     loadLocal();render();
+    const added=await applySeedUpdates(seedApplied);
+    if(added.length){seedApplied=[...seedApplied,...added];persistLocal()}
     const n=$("storeNotice");n.textContent="Τα δεδομένα αποθηκεύονται μόνο σε αυτόν τον browser. Κρατάτε τακτικά αντίγραφο με την «Εξαγωγή».";n.hidden=false;
     $("backupBar").hidden=false;
     $("exportBtn").onclick=()=>{
-      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap},null,2)],{type:"application/json"});
+      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied},null,2)],{type:"application/json"});
       const d=new Date(),stamp=String(d.getDate()).padStart(2,"0")+String(d.getMonth()+1).padStart(2,"0")+String(d.getFullYear()).slice(2);
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`lodge-visits-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();
     };
     $("importFile").onchange=async e=>{
       const f=e.target.files[0];if(!f)return;
       try{const d=JSON.parse(await f.text());if(!Array.isArray(d.visits)||!Array.isArray(d.lodges))throw 0;
-        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
+        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};seedApplied=d.seedApplied||[];persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
       catch(err){toast("Το αρχείο δεν είναι έγκυρο αντίγραφο")}
       e.target.value="";
     };
@@ -809,8 +829,12 @@ render();
   try{const user=await c.use("user");const w=user?await user.can("data.write"):null;if(w===false){canWrite=false;renderEditState()}}catch(e){}
   const sub=(col,setter)=>db.collection(col).onSnapshot(s=>{setter(s.docs.map(d=>({id:d.id,...d.data()})));render()},
     ()=>{const n=$("storeNotice");n.textContent="Η σύνδεση με τα δεδομένα διακόπηκε. Ανανεώστε τη σελίδα.";n.hidden=false});
-  sub("visits",a=>visits=a);sub("reps",a=>reps=a);sub("provinces",a=>provinces=a);sub("lodges",a=>lodges=a);
+  // Apply pending SEED.updates once the first snapshots of lodges, visits and settings/seed are in.
+  const ready=new Set(),mark=k=>{ready.add(k);if(ready.size===3&&!mark.ran){mark.ran=true;applySeedUpdates(seedApplied).then(async added=>{
+    if(added.length){try{await db.doc("settings/seed").set({applied:[...seedApplied,...added]})}catch(e){}}})}};
+  sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>reps=a);sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});
   db.doc("settings/rankmap").onSnapshot(d=>{rankMap=(d.exists&&d.data().map)||{};render()},()=>{});
+  db.doc("settings/seed").onSnapshot(d=>{seedApplied=(d.exists&&d.data().applied)||[];mark("seed")},()=>{});
 })();
 </script>
 
