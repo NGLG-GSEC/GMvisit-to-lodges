@@ -718,6 +718,20 @@ window.SEED={
      "province": "ΕΜΣτΕ Α.Ε. & Α.Τ."
     }
    }
+  },
+  {
+   "id": "2026-10-aegean-locations",
+   "lodgeChanges": {
+    "107": {
+     "location": "Σαντορίνη"
+    },
+    "110": {
+     "location": "Μύκονος"
+    },
+    "114": {
+     "location": "Σύρος"
+    }
+   }
   }
  ]
 };

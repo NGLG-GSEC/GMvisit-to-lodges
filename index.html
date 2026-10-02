@@ -171,6 +171,8 @@ td .num{font-variant-numeric:tabular-nums}
     <div class="toolbar" style="margin-top:20px">
       <input class="grow" id="lq" type="search" placeholder="Αναζήτηση Στοάς ή αριθμού…">
       <select id="lp"><option value="">Όλες οι Επαρχίες</option></select>
+      <select id="ls" aria-label="Ταξινόμηση"><option value="">Ταξινόμηση: Αριθμός Στοάς</option><option value="asc">Ημερομηνία: πλησιέστερη πρώτα</option><option value="desc">Ημερομηνία: απώτερη πρώτα</option></select>
+      <label class="chk"><input type="checkbox" id="lnd"> Χωρίς ημερομηνία</label>
       <button class="btn primary" id="addLodge">Νέα Στοά</button>
     </div>
     <div class="stats" id="lodgeStats"></div>
@@ -469,8 +471,13 @@ function renderLodges(){
   const q=$("lq").value.trim().toLowerCase(),pf=$("lp").value,body=$("lodgesBody"),today=todayISO();
   if(!lodges.length){body.innerHTML=`<div class="empty">Το Μητρώο Στοών είναι κενό.</div>`;$("lodgeStats").innerHTML="";return}
   const next={};visits.filter(v=>v.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).forEach(v=>{if(!next[v.number])next[v.number]=v});
-  const list=sortedLodges().filter(l=>(!pf||l.province===pf)&&(!q||`${l.number} ${l.name} ${l.location||""}`.toLowerCase().includes(q)));
-  $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length} Στοές</span>`;
+  // A lodge has an installation date when it has an upcoming visit.
+  const base=sortedLodges().filter(l=>(!pf||l.province===pf)&&(!q||`${l.number} ${l.name} ${l.location||""}`.toLowerCase().includes(q)));
+  const missing=base.filter(l=>!next[l.number]).length,sort=$("ls").value;
+  let list=$("lnd").checked?base.filter(l=>!next[l.number]):base;
+  if(sort)list=[...list].sort((a,b)=>{const x=next[a.number]?.date,y=next[b.number]?.date;
+    if(!x||!y)return (!x)-(!y);return sort==="asc"?x.localeCompare(y):y.localeCompare(x)});
+  $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length} Στοές</span><span><b>${base.length-missing}</b> με ημερομηνία εγκατάστασης</span><span class="${missing?"warn":""}"><b>${missing}</b> χωρίς ημερομηνία εγκατάστασης</span>`;
   const fmt=d=>{const x=parseISO(d);return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`};
   body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αρ.</th><th>Στοά</th><th>Επαρχία</th><th>Επόμενη επίσκεψη</th><th></th></tr></thead><tbody>${list.map(l=>{const v=next[l.number];return `<tr>
     <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}${l.location?`<div class="meta">${esc(l.location)}</div>`:""}</td><td class="meta">${esc(l.province||"—")}</td>
@@ -479,7 +486,7 @@ function renderLodges(){
   body.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{openVisit(null);fillFromLodge(lodges.find(l=>l.id===b.dataset.lv))});
   body.querySelectorAll("[data-le]").forEach(b=>b.onclick=()=>openLodge(lodges.find(l=>l.id===b.dataset.le)));
 }
-["lq","lp"].forEach(id=>$(id).addEventListener("input",renderLodges));
+["lq","lp","ls","lnd"].forEach(id=>$(id).addEventListener("input",renderLodges));
 function openLodge(l){
   editingLodge=l||null;$("lodgeTitle").textContent=l?"Επεξεργασία Στοάς":"Νέα Στοά";
   $("lNo").value=l?.number||"";$("lName").value=l?.name||"";$("lProv").innerHTML=provOptions(l?.province||"","— Χωρίς Επαρχία —");$("lProv").value=l?.province||"";$("lLoc").value=l?.location||"";
