@@ -59,6 +59,8 @@ label.chk input{width:auto}
 .btn.ghost{background:transparent}
 .btn.danger{color:var(--danger);border-color:var(--danger);background:transparent}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+.rit{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--lapis-soft);color:var(--lapis);white-space:nowrap}
+.rit.sc{background:var(--brass-soft);color:var(--brass)}.rit.sch{background:var(--ok-soft);color:var(--ok)}
 .ndalert{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;border:1px solid var(--brass);background:var(--brass-soft);border-radius:var(--r);padding:10px 14px;margin:12px 0;font-size:14px}
 .ndalert .d{white-space:nowrap}.ndalert .d b{color:var(--brass)}.ndalert .x{margin-left:auto;display:flex;gap:6px}
 .notice{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 14px;color:var(--muted);font-size:13px;margin:12px 0}
@@ -240,8 +242,11 @@ tr.past td{opacity:.6}
     <div class="toolbar" style="margin-top:20px">
       <input class="grow" id="lq" type="search" placeholder="Αναζήτηση Στοάς ή αριθμού…">
       <select id="lp"><option value="">Όλες οι Επαρχίες</option></select>
+      <select id="lr" aria-label="Τυπικό"><option value="">Όλα τα Τυπικά</option></select>
       <select id="ls" aria-label="Ταξινόμηση"><option value="">Ταξινόμηση: Αριθμός Στοάς</option><option value="asc">Ημερομηνία: πλησιέστερη πρώτα</option><option value="desc">Ημερομηνία: απώτερη πρώτα</option></select>
       <label class="chk"><input type="checkbox" id="lnd"> Χωρίς ημερομηνία</label>
+      <label class="chk"><input type="checkbox" id="lina"> Και μη ενεργές</label>
+      <button type="button" class="btn" id="xLodges">Excel</button>
       <button class="btn primary" id="addLodge">Νέα Στοά</button>
     </div>
     <div class="stats" id="lodgeStats"></div>
@@ -399,6 +404,10 @@ tr.past td{opacity:.6}
       <div class="field"><label for="lNo">Αριθμός</label><input id="lNo" required></div>
       <div class="field"><label for="lName">Όνομα</label><input id="lName" required></div>
       <div class="field full"><label for="lProv">Επαρχιακή Μεγάλη Στοά</label><select id="lProv"></select></div>
+      <div class="field"><label for="lRitual">Τυπικό</label><input id="lRitual" list="ritualList" placeholder="π.χ. Emulation, Σκωτικό"><datalist id="ritualList"></datalist></div>
+      <div class="field"><label for="lKind">Είδος</label><input id="lKind" list="kindList" placeholder="π.χ. Κανονική"><datalist id="kindList"></datalist></div>
+      <div class="field"><label for="lSeat">Έδρα</label><input id="lSeat" placeholder="π.χ. Αθήνα"></div>
+      <div class="field"><label class="chk" style="margin-top:26px"><input type="checkbox" id="lInactive"> Μη ενεργή Στοά</label></div>
       <div class="field full"><label for="lLoc">Τόπος συνεδριάσεων</label><input id="lLoc" list="locList" placeholder="π.χ. Τεκτονικόν Μέγαρον, Ερεσού 38, Αθήνα">
         <p class="hint">Συμπληρώνεται αυτόματα στις νέες επισκέψεις της Στοάς.</p></div>
     </div>
@@ -577,6 +586,11 @@ let officers=[], masters=[], repsRaw=[], repContacts={}, members=[], lodges=[], 
 const provByShort=s=>provinces.find(p=>p.short===s);
 const lodgeByNo=n=>lodges.find(l=>String(l.number)===String(n).trim());
 const lodgeSortKey=l=>{const n=parseInt(l.number,10);return isNaN(n)?100000:n};
+// Ritual (τυπικό) the lodge works; families group the variants for filtering and counts
+const RITUALS=["Emulation","Emulation (Αγγλικά)","Σκωτικό","Σκωτικό (Γαλλικό 1785)","Σκωτικό (1700)","Schröder"];
+const KINDS=["Κανονική","Ειδική","Ερευνητική","Αγγλόφωνη","Γαλλόφωνη","Ιταλόφωνη","Γερμανόφωνη"];
+const ritFamily=r=>!r?"":/^Σκωτικ/i.test(r)?"Σκωτικό":/^Emulation|Αμίλ/i.test(r)?"Emulation":r;
+const ritPill=r=>r?`<span class="rit${ritFamily(r)==="Σκωτικό"?" sc":ritFamily(r)==="Emulation"?"":" sch"}">${esc(r)}</span>`:'<span class="meta">—</span>';
 const sortedLodges=()=>[...lodges].sort((a,b)=>lodgeSortKey(a)-lodgeSortKey(b)||String(a.number).localeCompare(String(b.number)));
 const provOptions=(cur,empty)=>`<option value="">${empty}</option>`+sortedProvs().map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("")+(cur&&!provByShort(cur)?`<option>${esc(cur)}</option>`:"");
 // Province colour follows the province (its place in the order), never the filtered list
@@ -703,34 +717,49 @@ function renderRankMap(){
 $("rankMapBtn").onclick=()=>{renderRankMap();openOv("ovRanks")};
 ["rq","rf","rk"].forEach(id=>$(id).addEventListener("input",renderReps));
 function renderLodges(){
-  const q=$("lq").value.trim().toLowerCase(),pf=$("lp").value,body=$("lodgesBody"),today=todayISO();
+  const q=$("lq").value.trim().toLowerCase(),pf=$("lp").value,rf=$("lr").value,ina=$("lina").checked,body=$("lodgesBody"),today=todayISO();
+  const fams=[...new Set(lodges.map(l=>ritFamily(l.ritual)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
+  $("lr").innerHTML='<option value="">Όλα τα Τυπικά</option>'+fams.map(f=>`<option ${f===rf?"selected":""}>${esc(f)}</option>`).join("");
   if(!lodges.length){body.innerHTML=`<div class="empty">Το Μητρώο Στοών είναι κενό.</div>`;$("lodgeStats").innerHTML="";return}
   const next={};visits.filter(v=>v.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).forEach(v=>{if(!next[v.number])next[v.number]=v});
   // A lodge has an installation date when it has an upcoming visit.
-  const base=sortedLodges().filter(l=>(!pf||l.province===pf)&&(!q||`${l.number} ${l.name} ${l.location||""}`.toLowerCase().includes(q)));
-  const missing=base.filter(l=>!next[l.number]).length,sort=$("ls").value;
+  const base=sortedLodges().filter(l=>(ina||!l.inactive)&&(!pf||l.province===pf)&&(!rf||ritFamily(l.ritual)===rf)&&(!q||`${l.number} ${l.name} ${l.location||""} ${l.seat||""} ${l.ritual||""} ${l.kind||""}`.toLowerCase().includes(q)));
+  const missing=base.filter(l=>!next[l.number]&&!l.inactive).length,sort=$("ls").value;
   let list=$("lnd").checked?base.filter(l=>!next[l.number]):base;
   if(sort)list=[...list].sort((a,b)=>{const x=next[a.number]?.date,y=next[b.number]?.date;
     if(!x||!y)return (!x)-(!y);return sort==="asc"?x.localeCompare(y):y.localeCompare(x)});
-  $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length} Στοές</span><span><b>${base.length-missing}</b> με ημερομηνία εγκατάστασης</span><span class="${missing?"warn":""}"><b>${missing}</b> χωρίς ημερομηνία εγκατάστασης</span>`;
+  const famCount={};base.forEach(l=>{const f=ritFamily(l.ritual)||"Χωρίς Τυπικό";famCount[f]=(famCount[f]||0)+1});
+  const nIna=lodges.filter(l=>l.inactive).length;
+  $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length-(ina?0:nIna)} ${ina?"":"ενεργές "}Στοές</span>${Object.entries(famCount).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span><b>${n}</b> ${esc(f)}</span>`).join("")}${!ina&&nIna?`<span class="meta">${nIna} μη ενεργές κρυμμένες</span>`:""}<span><b>${base.length-missing}</b> με ημερομηνία εγκατάστασης</span><span class="${missing?"warn":""}"><b>${missing}</b> χωρίς ημερομηνία εγκατάστασης</span>`;
   const fmt=d=>{const x=parseISO(d);return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`};
-  body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αρ.</th><th>Στοά</th><th>Επαρχία</th><th>Επόμενη επίσκεψη</th><th></th></tr></thead><tbody>${list.map(l=>{const v=next[l.number];return `<tr${pcStyle(l.province)}>
-    <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}${l.location?`<div class="meta">${esc(l.location)}</div>`:""}</td><td class="meta">${l.province?`<span class="pdot"></span>`:""}${esc(l.province||"—")}</td>
+  body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αρ.</th><th>Στοά</th><th>Τυπικό</th><th>Επαρχία</th><th>Επόμενη επίσκεψη</th><th></th></tr></thead><tbody>${list.map(l=>{const v=next[l.number];return `<tr${pcStyle(l.province)}>
+    <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}${l.inactive?' <span class="pill-warn">Μη ενεργή</span>':""}${l.location||l.seat?`<div class="meta">${esc(l.location||l.seat)}</div>`:""}</td><td>${ritPill(l.ritual)}${l.kind?`<div class="meta">${esc(l.kind)}</div>`:""}</td><td class="meta">${l.province?`<span class="pdot"></span>`:""}${esc(l.province||"—")}</td>
     <td>${v?`${fmt(v.date)}${repById(v.repId)?`<div class="meta">${esc(repLabel(repById(v.repId)))}</div>`:`<div><span class="pill-warn">Χωρίς εκπρόσωπο</span></div>`}`:`<span class="meta">—</span>`}</td>
     <td style="white-space:nowrap">${canWrite?`<button type="button" class="btn ghost sm" data-lv="${esc(l.id)}">+ Επίσκεψη</button> <button type="button" class="btn ghost sm" data-le="${esc(l.id)}">Επεξεργασία</button>`:""}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="empty">Καμία Στοά δεν ταιριάζει με την αναζήτηση.</div>`;
   body.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{openVisit(null);fillFromLodge(lodges.find(l=>l.id===b.dataset.lv))});
   body.querySelectorAll("[data-le]").forEach(b=>b.onclick=()=>openLodge(lodges.find(l=>l.id===b.dataset.le)));
 }
-["lq","lp","ls","lnd"].forEach(id=>$(id).addEventListener("input",renderLodges));
+["lq","lp","lr","ls","lnd","lina"].forEach(id=>$(id).addEventListener("input",renderLodges));
+$("xLodges").onclick=()=>{
+  const today=todayISO(),next={};visits.filter(v=>v.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).forEach(v=>{if(!next[v.number])next[v.number]=v});
+  exportXlsx("stoes",[["Στοές",["Αρ.","Στοά","Τυπικό","Είδος","Επαρχία","Έδρα","Τόπος συνεδριάσεων","Κατάσταση","Επόμενη επίσκεψη"],
+    sortedLodges().map(l=>[l.number,l.name,l.ritual||"",l.kind||"",l.province||"",l.seat||"",l.location||"",l.inactive?"Μη ενεργή":"Ενεργή",next[l.number]?fmtDate(next[l.number].date):""])]],$("xLodges"));
+};
 function openLodge(l){
   editingLodge=l||null;$("lodgeTitle").textContent=l?"Επεξεργασία Στοάς":"Νέα Στοά";
   $("lNo").value=l?.number||"";$("lName").value=l?.name||"";$("lProv").innerHTML=provOptions(l?.province||"","— Χωρίς Επαρχία —");$("lProv").value=l?.province||"";$("lLoc").value=l?.location||"";
+  $("ritualList").innerHTML=[...new Set([...RITUALS,...lodges.map(x=>x.ritual).filter(Boolean)])].map(x=>`<option value="${esc(x)}">`).join("");
+  $("kindList").innerHTML=[...new Set([...KINDS,...lodges.map(x=>x.kind).filter(Boolean)])].map(x=>`<option value="${esc(x)}">`).join("");
+  $("lRitual").value=l?.ritual||"";$("lKind").value=l?.kind||"";$("lSeat").value=l?.seat||"";$("lInactive").checked=!!l?.inactive;
   $("lDel").hidden=!l;$("lErr").hidden=true;openOv("ovLodge");
 }
 $("addLodge").onclick=()=>openLodge(null);
 $("formLodge").addEventListener("submit",async e=>{
   e.preventDefault();
-  const data={number:$("lNo").value.trim(),name:clean($("lName").value),province:$("lProv").value,location:$("lLoc").value.trim()};
+  // Keep fields this form does not edit; empty optional fields are dropped
+  const data={...(editingLodge?strip(editingLodge):{}),number:$("lNo").value.trim(),name:clean($("lName").value),province:$("lProv").value,location:$("lLoc").value.trim(),
+    ritual:$("lRitual").value.trim(),kind:$("lKind").value.trim(),seat:$("lSeat").value.trim(),inactive:$("lInactive").checked};
+  ["ritual","kind","seat"].forEach(k=>{if(!data[k])delete data[k]});if(!data.inactive)delete data.inactive;
   if(!data.number||!data.name){showErr("lErr","Συμπληρώστε αριθμό και όνομα.");return}
   const dup=lodgeByNo(data.number);if(dup&&dup.id!==editingLodge?.id){showErr("lErr",`Ο αριθμός ${data.number} ανήκει ήδη στη Στοά ${dup.name}.`);return}
   const id=editingLodge?.id||("l-"+(/^[0-9A-Za-z]+$/.test(data.number)?data.number:newId("x")));
@@ -1000,7 +1029,7 @@ $("xOfficers").onclick=()=>{
 // Lodge masters: one row per lodge of the registry, with the active Worshipful Master when known
 function masterRows(){
   const byNo=new Map(masters.map(m=>[String(m.number),m]));
-  const rows=sortedLodges().map(l=>({lodge:l,m:byNo.get(String(l.number))}));
+  const rows=sortedLodges().filter(l=>!l.inactive).map(l=>({lodge:l,m:byNo.get(String(l.number))}));
   masters.filter(m=>!lodgeByNo(m.number)).forEach(m=>rows.push({lodge:{number:m.number,name:m.lodge||"",province:m.province||""},m}));
   return rows.map(r=>({...r,m:r.m?withContact(r.m):null,province:r.lodge.province||r.m?.province||""}));
 }
@@ -1657,7 +1686,7 @@ function pubRows(){
 }
 function pubMissing(){
   const prov=$("pubProv").value,today=todayISO(),has=new Set(visits.filter(v=>v.date>=today).map(v=>String(v.number)));
-  return sortedLodges().filter(l=>l.province===prov&&!has.has(String(l.number)));
+  return sortedLodges().filter(l=>l.province===prov&&!l.inactive&&!has.has(String(l.number)));
 }
 function renderPub(){
   const p=provByShort($("pubProv").value),rows=pubRows(),miss=pubMissing();

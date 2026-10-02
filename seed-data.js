@@ -738,6 +738,427 @@ window.SEED={
    "officeRenames": {
     "Μέγας Ιερέας": "Μέγας Ευχέτης"
    }
+  },
+  {
+   "id": "2026-10-lodge-rituals",
+   "lodgeChanges": {
+    "1": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πάτρα"
+    },
+    "2": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "3": {
+     "ritual": "Emulation (Αγγλικά)",
+     "kind": "Αγγλόφωνη",
+     "seat": "Πειραιάς"
+    },
+    "4": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "5": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "6": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Αθήνα"
+    },
+    "8": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "9": {
+     "ritual": "Emulation",
+     "kind": "Ερευνητική",
+     "seat": "Αθήνα"
+    },
+    "10": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "11": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "12": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "13": {
+     "ritual": "Emulation",
+     "kind": "Ιταλόφωνη",
+     "seat": "Αθήνα"
+    },
+    "15": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "16": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Λευκάδα"
+    },
+    "17": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "18": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Αθήνα"
+    },
+    "19": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "21": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "23": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "24": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "26": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Καβάλα"
+    },
+    "28": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Ρόδος"
+    },
+    "29": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Θεσσαλονίκη"
+    },
+    "30": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Θεσσαλονίκη"
+    },
+    "31": {
+     "ritual": "Schröder",
+     "kind": "Γερμανόφωνη",
+     "seat": "Πειραιάς"
+    },
+    "32": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Ιωάννινα"
+    },
+    "33": {
+     "ritual": "Emulation",
+     "kind": "Ερευνητική",
+     "seat": "Πειραιάς"
+    },
+    "36": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Θεσσαλονίκη"
+    },
+    "39": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Αθήνα"
+    },
+    "42": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "44": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "48": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Κέρκυρα"
+    },
+    "50": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Κρήτη"
+    },
+    "53": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Κέρκυρα"
+    },
+    "54": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "55": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Λευκωσία"
+    },
+    "58": {
+     "ritual": "Σκωτικό (Γαλλικό 1785)",
+     "kind": "Γαλλόφωνη",
+     "seat": "Αθήνα"
+    },
+    "59": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "60": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Λάρισα"
+    },
+    "61": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Κέρκυρα"
+    },
+    "62": {
+     "ritual": "Emulation",
+     "kind": "Ερευνητική",
+     "seat": "Αθήνα",
+     "inactive": true
+    },
+    "64": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Λευκωσία"
+    },
+    "66": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Κέρκυρα"
+    },
+    "67": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "69": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "70": {
+     "ritual": "Emulation",
+     "kind": "Ερευνητική",
+     "seat": "Αθήνα"
+    },
+    "71": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Λευκωσία"
+    },
+    "74": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Αθήνα"
+    },
+    "76": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "78": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "80": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Ρόδος"
+    },
+    "84": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Λευκωσία"
+    },
+    "85": {
+     "ritual": "Emulation (Αγγλικά)",
+     "kind": "Αγγλόφωνη",
+     "seat": "Κέρκυρα"
+    },
+    "86": {
+     "ritual": "Emulation",
+     "kind": "Ιταλόφωνη",
+     "seat": "Κέρκυρα"
+    },
+    "89": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "90": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Αθήνα"
+    },
+    "91": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Λαμία"
+    },
+    "92": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Κέρκυρα"
+    },
+    "93": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Κέρκυρα"
+    },
+    "94": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Κέρκυρα"
+    },
+    "95": {
+     "ritual": "Σκωτικό (Γαλλικό 1785)",
+     "kind": "Γαλλόφωνη",
+     "seat": "Κέρκυρα"
+    },
+    "96": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "97": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "98": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Ιωάννινα"
+    },
+    "99": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "100": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Καλαμάτα"
+    },
+    "101": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Ζάκυνθος"
+    },
+    "102": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "103": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "104": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "105": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "106": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Θεσσαλονίκη"
+    },
+    "107": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Σαντορίνη"
+    },
+    "108": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "110": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Μύκονος"
+    },
+    "111": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Αθήνα"
+    },
+    "112": {
+     "ritual": "Emulation",
+     "kind": "Ερευνητική",
+     "seat": "Πειραιάς"
+    },
+    "113": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Πειραιάς"
+    },
+    "114": {
+     "ritual": "Emulation",
+     "kind": "Κανονική",
+     "seat": "Σύρος"
+    },
+    "115": {
+     "ritual": "Σκωτικό",
+     "kind": "Κανονική",
+     "seat": "Κομοτηνή"
+    },
+    "116": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Αθήνα"
+    },
+    "117": {
+     "ritual": "Emulation",
+     "kind": "Ειδική",
+     "seat": "Αθήνα"
+    },
+    "Φ": {
+     "ritual": "Σκωτικό (1700)",
+     "kind": "Κανονική",
+     "seat": "Κέρκυρα"
+    }
+   }
   }
  ]
 };
