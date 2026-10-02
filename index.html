@@ -59,6 +59,8 @@ label.chk input{width:auto}
 .btn.ghost{background:transparent}
 .btn.danger{color:var(--danger);border-color:var(--danger);background:transparent}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+.ndalert{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;border:1px solid var(--brass);background:var(--brass-soft);border-radius:var(--r);padding:10px 14px;margin:12px 0;font-size:14px}
+.ndalert .d{white-space:nowrap}.ndalert .d b{color:var(--brass)}.ndalert .x{margin-left:auto;display:flex;gap:6px}
 .notice{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 14px;color:var(--muted);font-size:13px;margin:12px 0}
 .month{margin-top:28px}
 .month h2{display:flex;align-items:baseline;gap:12px;font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
@@ -193,6 +195,7 @@ tr.past td{opacity:.6}
   </header>
 
   <div id="storeNotice" class="notice" hidden></div>
+  <div id="ndAlert" class="ndalert" role="status" hidden></div>
   <div class="toolbar" id="backupBar" hidden>
     <button class="btn" id="exportBtn">Εξαγωγή αντιγράφου (JSON)</button>
     <label class="btn" for="importFile" style="display:inline-flex;align-items:center">Επαναφορά από αντίγραφο</label>
@@ -1045,8 +1048,25 @@ function celebrants(from,to){
       const k=d+"|"+ndLabel(it);if(!groups.has(k))groups.set(k,{date:d,label:ndLabel(it),movable:it.easter!=null||!!it.rule,members:[]});groups.get(k).members.push(m)}});
   return [...groups.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.label.localeCompare(b.label,"el"));
 }
+// Banner on opening: members celebrating today and over the next 7 days
+let ndAlertOff=false;
+function renderNdAlert(){
+  const el=$("ndAlert");if(!el)return;
+  if(ndAlertOff||!namedays.length||!members.length){el.hidden=true;return}
+  const t=todayISO(),end=parseISO(t);end.setDate(end.getDate()+7);
+  const byDay=new Map();celebrants(t,isoOf(end)).forEach(g=>{const x=byDay.get(g.date)||{n:0,labels:[]};x.n+=g.members.length;x.labels.push(g.label);byDay.set(g.date,x)});
+  const name=d=>{const k=Math.round((parseISO(d)-parseISO(t))/864e5);return k===0?"Σήμερα":k===1?"Αύριο":k===2?"Μεθαύριο":`${DAYS[parseISO(d).getDay()]} ${fmtDate(d).slice(0,5)}`};
+  const days=[...byDay].sort((a,b)=>a[0].localeCompare(b[0]));
+  el.innerHTML=(days.length?`<span>🎉 <b>Εορτάζοντες:</b></span>`+(byDay.has(t)?"":'<span class="d">Σήμερα <span class="meta">κανένα μέλος</span></span><span class="meta">·</span>')+days.map(([d,x],i)=>`<span class="d" title="${esc(x.labels.join(", "))}">${i===0&&d===t?"Σήμερα εορτάζουν":esc(name(d))} <b>${x.n}</b> ${x.n===1?"μέλος":"μέλη"} <span class="meta">(${esc(x.labels.join(", "))})</span></span>`).join('<span class="meta">·</span>')
+      :`<span>Κανένα μέλος δεν εορτάζει σήμερα και τις επόμενες 7 ημέρες.</span>`)+
+    `<span class="x">${days.length?'<button type="button" class="btn primary sm" id="ndAlertGo">Εορτολόγιο &amp; ευχές</button>':""}<button type="button" class="btn ghost sm" id="ndAlertX" aria-label="Κλείσιμο">✕</button></span>`;
+  el.hidden=false;
+  $("ndAlertX").onclick=()=>{ndAlertOff=true;el.hidden=true};
+  if($("ndAlertGo"))$("ndAlertGo").onclick=()=>{$("ndFrom").value=t;$("ndTo").value=isoOf(end);showTab("members");document.querySelector('[data-msub="namedays"]').click();renderNamedays();$("msub-namedays").scrollIntoView({behavior:"smooth",block:"start"})};
+}
 function ndDefaults(){if(!$("ndFrom").value)$("ndFrom").value=todayISO();if(!$("ndTo").value){const d=parseISO(todayISO());d.setDate(d.getDate()+30);$("ndTo").value=isoOf(d)}}
 function renderNamedays(){
+  renderNdAlert();
   const body=$("ndBody");if(!body)return;
   if(!namedays.length){$("ndStats").innerHTML="";body.innerHTML=`<div class="empty">Δεν έχει φορτωθεί ακόμη το εορτολόγιο.</div>`;$("ndSelBar").hidden=true;return}
   ndDefaults();
