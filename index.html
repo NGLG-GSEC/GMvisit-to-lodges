@@ -20,18 +20,18 @@
   --body:"Noto Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:10px;
   /* province colours, fixed order (dataviz categorical slots 1-8) */
-  --p1:#2a78d6;--p2:#eb6834;--p3:#1baf7a;--p4:#eda100;--p5:#e87ba4;--p6:#008300;--p7:#4a3aa7;--p8:#e34948;
+  --p1:#2a78d6;--p2:#eb6834;--p3:#1baf7a;--p4:#eda100;--p5:#e87ba4;--p6:#008300;--p7:#4a3aa7;--p8:#e34948;--ok:#1d7a3e;--ok-soft:#e3f3e8;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1422; --surface:#171e31; --ink:#e7ebf4; --muted:#9aa5bd; --line:#2a3350;
   --lapis:#8fa9ec; --lapis-soft:#1f2a48; --brass:#d9b865; --brass-soft:#2e2819;
   --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark;
-  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;}}
+  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;--ok:#7fd99b;--ok-soft:#173322;}}
 :root[data-theme="dark"]{
   --bg:#0f1422; --surface:#171e31; --ink:#e7ebf4; --muted:#9aa5bd; --line:#2a3350;
   --lapis:#8fa9ec; --lapis-soft:#1f2a48; --brass:#d9b865; --brass-soft:#2e2819;
   --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark;
-  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;}
+  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;--ok:#7fd99b;--ok-soft:#173322;}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
 .wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:24px 64px}
@@ -66,6 +66,11 @@ label.chk input{width:auto}
 .list{display:grid;gap:8px}
 .visit{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,220px);gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
 .visit:hover{border-color:var(--lapis)}
+.visit:focus-visible{outline:2px solid var(--lapis);outline-offset:2px}
+.vact{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.okpill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.sample{white-space:pre-wrap;font:inherit;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:40vh;overflow:auto}
+#ovBulk{z-index:11}
 .visit[style*="--pc"]{border-left:5px solid var(--pc)}
 .visit[style*="--pc"]:hover{border-left-color:var(--pc)}
 .pdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc,var(--muted));margin-right:6px;vertical-align:-1px;flex:none}
@@ -125,6 +130,28 @@ td .num{font-variant-numeric:tabular-nums}
 }
 @media (prefers-reduced-motion:no-preference){.visit{transition:border-color .15s}}
 #ovNote{z-index:12}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:12px}
+.pcard{display:flex;flex-direction:column;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:0;overflow:hidden;cursor:pointer;font:inherit;color:inherit}
+.pcard:hover{border-color:var(--brass)}
+.pcover{aspect-ratio:16/7;background:var(--brass-soft);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pcover.big{aspect-ratio:4/3;border-radius:8px}
+.pcover img{width:100%;height:100%;object-fit:cover}
+.pcover span{font-family:var(--display);font-size:38px;color:var(--brass)}
+.pbody{padding:12px 14px;display:grid;gap:4px}
+.psec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:14px}
+.psec h3{font-family:var(--display);font-weight:400;font-size:21px;margin:0 0 12px;display:flex;gap:10px;align-items:baseline}
+.phead{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:18px}
+.unitrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) auto;gap:10px;align-items:end;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.crow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.files{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.fitem{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);display:grid}
+.fthumb{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:var(--brass-soft);color:var(--brass);font-weight:700;font-size:22px;overflow:hidden;text-decoration:none}
+.fthumb img{width:100%;height:100%;object-fit:cover}
+.fmeta{padding:6px 8px;font-size:12px;display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
+.logitem{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start}
+.savestate{font-size:12px;color:var(--muted)}
+.warn-t{color:var(--warn)}
+@media (max-width:720px){.phead,.unitrow,.crow{grid-template-columns:1fr}.logitem{grid-template-columns:1fr auto}}
 .subtabs{display:flex;flex-wrap:wrap;gap:4px;margin:20px 0 4px;border-bottom:1px solid var(--line)}
 .subtabs button{border:0;border-bottom:3px solid transparent;background:transparent;color:var(--muted);font:inherit;font-weight:600;font-size:14px;padding:8px 12px;cursor:pointer;margin-bottom:-1px}
 .subtabs button[aria-selected="true"]{color:var(--brass);border-bottom-color:var(--brass)}
@@ -157,6 +184,7 @@ tr.past td{opacity:.6}
       <button role="tab" id="tab-lodges" aria-selected="false">Στοές</button>
       <button role="tab" id="tab-provs" aria-selected="false">Επαρχίες</button>
       <button role="tab" id="tab-members" aria-selected="false">Μέλη</button>
+      <button role="tab" id="tab-projects" aria-selected="false">Πρότζεκτ ΜΔ</button>
     </div>
   </header>
 
@@ -174,6 +202,7 @@ tr.past td{opacity:.6}
       <select id="fProv"><option value="">Όλες οι Επαρχίες</option></select>
       <div class="combo combo-filter"><input id="fRepQ" type="search" placeholder="Όλοι οι εκπρόσωποι" aria-label="Φίλτρο εκπροσώπου" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="fRepList"><div class="combo-list" id="fRepList" role="listbox" hidden></div></div>
       <input type="hidden" id="fRep" value="">
+      <select id="fNotif" aria-label="Ενημέρωση"><option value="">Όλες οι ενημερώσεις</option><option value="rep">Εκπρόσωπος δεν ενημερώθηκε</option><option value="prov">Επαρχία δεν ενημερώθηκε</option></select>
       <label class="chk"><input type="checkbox" id="fPast"> Παλαιότερες</label>
     </div>
     <div class="toolbar">
@@ -251,6 +280,19 @@ tr.past td{opacity:.6}
       <div id="mastersBody"></div>
     </div>
     <div class="err" id="xErr" hidden></div>
+  </section>
+
+  <section id="view-projects" hidden>
+    <div id="projListView">
+      <div class="toolbar" style="margin-top:20px">
+        <input class="grow" id="pq" type="search" placeholder="Αναζήτηση πρότζεκτ…" autocomplete="off">
+        <select id="pst" aria-label="Κατάσταση"><option value="">Όλες οι καταστάσεις</option><option value="plan">Σχεδιασμός</option><option value="active">Σε εξέλιξη</option><option value="hold">Σε αναμονή</option><option value="done">Ολοκληρώθηκε</option></select>
+        <button class="btn primary" id="addProj">Νέο πρότζεκτ</button>
+      </div>
+      <div class="stats" id="projStats"></div>
+      <div id="projList"></div>
+    </div>
+    <div id="projEdit" hidden></div>
   </section>
 
   <section id="view-provs" hidden>
@@ -380,6 +422,37 @@ tr.past td{opacity:.6}
   </div>
 </div>
 
+<div class="overlay" id="ovNewProj" hidden>
+  <form class="panel" id="formNewProj" novalidate>
+    <h3>Νέο πρότζεκτ</h3>
+    <div class="grid">
+      <div class="field full"><label for="npTitle">Τίτλος</label><input id="npTitle" required placeholder="π.χ. The Commemorative Order of St Thomas of Acon"></div>
+      <div class="field full"><label for="npType">Είδος</label><select id="npType"><option value="lodge">Ίδρυση νέας Στοάς</option><option value="body">Ίδρυση νέου Σώματος</option><option value="other">Άλλο έργο</option></select></div>
+      <div class="field"><label for="npStart">Ημερομηνία έναρξης</label><input id="npStart" type="date"></div>
+      <div class="field"><label for="npTarget">Ημερομηνία στόχου</label><input id="npTarget" type="date"></div>
+      <div class="field full" id="npUnitsRow" hidden><label for="npUnits">Πόσες Στοές θα έχει το Σώμα</label><input id="npUnits" type="number" min="0" max="50" inputmode="numeric">
+        <p class="hint">Δημιουργούνται ως «Στοά 1», «Στοά 2»… και μετονομάζονται αργότερα.</p></div>
+    </div>
+    <div class="err" id="npErr" hidden></div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Άκυρο</button><button type="submit" class="btn primary">Δημιουργία</button></div>
+  </form>
+</div>
+
+<div class="overlay" id="ovBulk" hidden>
+  <div class="panel wide">
+    <h3>Μαζική ενημέρωση εκπροσώπων</h3>
+    <p class="hint">Κάθε εκπρόσωπος λαμβάνει ένα email με όλες τις Εγκαταστάσεις του που δεν έχει ενημερωθεί, με συνημμένη πρόσκληση ημερολογίου. Ελέγξτε τη λίστα και το κείμενο («Προβολή») πριν την αποστολή.</p>
+    <div id="bulkList" class="list"></div>
+    <details style="margin-top:10px"><summary class="hint" style="cursor:pointer">Δείγμα κειμένου</summary><pre id="bulkSample" class="sample"></pre></details>
+    <div class="err" id="bulkErr" hidden></div>
+    <p class="hint" id="bulkStatus" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn primary" id="bulkSend">Αποστολή</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="ovNote" hidden>
   <form class="panel" id="formNote" novalidate>
     <h3 id="nTitle">Ειδοποίηση Επαρχίας</h3>
@@ -391,11 +464,13 @@ tr.past td{opacity:.6}
         <div class="actions" style="margin-top:6px"><button type="button" class="btn ghost sm" data-cp="nBody">Αντιγραφή κειμένου</button></div></div>
     </div>
     <p class="hint" id="nHow">Μπορείτε να διορθώσετε το κείμενο πριν την αποστολή. Πολλοί παραλήπτες: χωρίστε τα email με κόμμα.</p>
+    <p class="hint" id="nAttach" hidden></p>
     <div class="err" id="nErr" hidden></div>
     <p class="hint" id="nStatus" aria-live="polite"></p>
     <div class="actions">
       <a class="btn ghost left" id="nMailto" href="#" target="_blank" rel="noopener">Άνοιγμα στο πρόγραμμα email</a>
       <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn ghost" id="nMark" hidden title="Αν το στείλατε από το πρόγραμμα email σας">Σημείωση ως σταλμένο</button>
       <button type="button" class="btn" id="nDraft" hidden>Πρόχειρο στο Gmail</button>
       <button type="button" class="btn primary" id="nSend" hidden>Αποστολή μέσω Gmail</button>
     </div>
@@ -498,14 +573,14 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.defaultPrevented
 
 /* Tabs */
 function showTab(which){
-  ["visits","reps","lodges","provs","members"].forEach(t=>{$("tab-"+t).setAttribute("aria-selected",t===which);$("view-"+t).hidden=t!==which});
+  ["visits","reps","lodges","provs","members","projects"].forEach(t=>{$("tab-"+t).setAttribute("aria-selected",t===which);$("view-"+t).hidden=t!==which});
   try{localStorage.setItem("lvr-tab",which)}catch(e){}
 }
-$("tab-visits").onclick=()=>showTab("visits");$("tab-reps").onclick=()=>showTab("reps");$("tab-provs").onclick=()=>showTab("provs");$("tab-lodges").onclick=()=>showTab("lodges");$("tab-members").onclick=()=>showTab("members");
-try{const t=localStorage.getItem("lvr-tab");if(["reps","provs","lodges","members"].includes(t))showTab(t)}catch(e){}
+$("tab-visits").onclick=()=>showTab("visits");$("tab-reps").onclick=()=>showTab("reps");$("tab-provs").onclick=()=>showTab("provs");$("tab-lodges").onclick=()=>showTab("lodges");$("tab-members").onclick=()=>showTab("members");$("tab-projects").onclick=()=>showTab("projects");
+try{const t=localStorage.getItem("lvr-tab");if(["reps","provs","lodges","members","projects"].includes(t))showTab(t)}catch(e){}
 
 /* Rendering */
-function render(){renderFilters();renderVisits();renderReps();renderProvs();renderLodges();renderMembers();renderOfficers();renderMasters()}
+function render(){renderFilters();renderVisits();renderReps();renderProvs();renderLodges();renderMembers();renderOfficers();renderMasters();renderProjects()}
 function renderFilters(){
   const provs=[...new Set([...sortedProvs().map(p=>p.short),...visits.map(v=>v.province).filter(Boolean)])];
   const locs=[...new Set([...lodges,...visits].map(x=>x.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
@@ -519,13 +594,15 @@ function renderFilters(){
 }
 function sortedReps(){return [...reps].sort((a,b)=>(a.surname||"").localeCompare(b.surname||"","el"))}
 function renderVisits(){
-  const q=$("q").value.trim().toLowerCase(),prov=$("fProv").value,rep=$("fRep").value,past=$("fPast").checked,today=todayISO();
+  const q=$("q").value.trim().toLowerCase(),prov=$("fProv").value,rep=$("fRep").value,past=$("fPast").checked,notif=$("fNotif").value,today=todayISO();
   const upcoming=visits.filter(v=>v.date>=today);
   const unassigned=upcoming.filter(v=>!v.repId||!repById(v.repId));
-  $("stats").innerHTML=`<span><b>${upcoming.length}</b> προσεχείς επισκέψεις</span><span class="${unassigned.length?"warn":""}"><b>${unassigned.length}</b> χωρίς εκπρόσωπο</span><span><b>${reps.length}</b> εκπρόσωποι</span>`;
+  const toBrief=upcoming.filter(v=>repById(v.repId)&&!repNotified(v)).length;
+  $("stats").innerHTML=`<span><b>${upcoming.length}</b> προσεχείς επισκέψεις</span><span class="${unassigned.length?"warn":""}"><b>${unassigned.length}</b> χωρίς εκπρόσωπο</span><span class="${toBrief?"warn":""}"><b>${toBrief}</b> εκπρόσωποι προς ενημέρωση</span><span><b>${reps.length}</b> εκπρόσωποι</span>`;
   let list=visits.filter(v=>(past||v.date>=today)
     &&(!prov||v.province===prov)
     &&(!rep||(rep==="__none"?(!v.repId||!repById(v.repId)):v.repId===rep))
+    &&(!notif||(notif==="rep"?(repById(v.repId)&&!repNotified(v)):!provNotified(v)))
     &&(!q||[v.lodge,v.number,v.location,v.province,repLabel(repById(v.repId))].join(" ").toLowerCase().includes(q)))
     .sort((a,b)=>a.date.localeCompare(b.date)||(Number(a.number)||0)-(Number(b.number)||0));
   const box=$("months");
@@ -537,15 +614,18 @@ function renderVisits(){
     const [y,m]=k.split("-").map(Number);
     return `<section class="month"><h2>${MONTHS[m-1]} ${y} <small>${items.length} ${items.length===1?"επίσκεψη":"επισκέψεις"}</small></h2><div class="list">${items.map(v=>{
       const d=parseISO(v.date),r=repById(v.repId);
-      return `<button class="visit${v.date<today?" past":""}" data-id="${esc(v.id)}"${pcStyle(v.province)}>
+      const rn=repNotified(v),pn=provNotified(v);
+      return `<div class="visit${v.date<today?" past":""}" role="button" tabindex="0" data-id="${esc(v.id)}"${pcStyle(v.province)}>
         <div class="date"><div class="d">${d.getDate()}</div><div class="w">${DAYS[d.getDay()].slice(0,3)}</div></div>
         <div style="min-width:0"><div class="lodge">${esc(v.lodge)}${v.number?`<span class="no">Αρ. ${esc(v.number)}</span>`:""}</div>
           <div class="meta">${DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()} · ${esc(v.location||"Τόπος —")}</div>
+          ${r||pn?`<div class="vact">${r&&canWrite?`<button type="button" class="btn sm${rn?" ghost":" primary"}" data-brief="${esc(v.id)}">${rn?"↻ Ξανά αποστολή στον εκπρόσωπο":"✉ Ενημέρωση εκπροσώπου"}</button>`:""}${rn?`<span class="okpill">✓ Εκπρόσωπος ενημερώθηκε ${esc(fmtDate(rn.at))}</span>`:""}${pn?`<span class="okpill">✓ Επαρχία ενημερώθηκε ${esc(fmtDate(pn.at))}</span>`:""}</div>`:""}
           ${v.notes?`<div class="note">${esc(v.notes)}</div>`:""}
           ${v.province?`<span class="chip"${pcStyle(v.province)}><span class="pdot"></span>${esc(v.province)}</span>${provByShort(v.province)?.email?`<div class="mail">${esc(provByShort(v.province).email)}</div>`:""}`:""}</div>
         <div class="rep">${r?`<div class="who">${esc(repLabel(r))}</div><div class="role">${esc(r.office||"")}</div>`:`<span class="pill-warn">Χωρίς εκπρόσωπο</span>`}</div>
-      </button>`}).join("")}</div></section>`}).join("");
-  box.querySelectorAll(".visit").forEach(b=>b.onclick=()=>openVisit(visits.find(v=>v.id===b.dataset.id)));
+      </div>`}).join("")}</div></section>`}).join("");
+  box.querySelectorAll(".visit").forEach(b=>{const open=()=>openVisit(visits.find(v=>v.id===b.dataset.id));b.onclick=open;b.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&e.target===b){e.preventDefault();open()}}});
+  box.querySelectorAll("[data-brief]").forEach(b=>b.onclick=e=>{e.stopPropagation();const v=visits.find(x=>x.id===b.dataset.brief),r=repById(v?.repId);if(v&&r)repMail(r,[v])});
 }
 function renderReps(){
   const body=$("repsBody");
@@ -641,7 +721,7 @@ $("formProv").addEventListener("submit",async e=>{
     closeOv($("formProv"));toast("Αποθηκεύτηκε")}
 });
 $("pDel").onclick=()=>askConfirm(`Διαγραφή της ${editingProv.short};`,async()=>{if(await remove("provinces",editingProv.id)){$("ovProv").hidden=true;toast("Διαγράφηκε")}});
-["q","fProv","fRep","fPast"].forEach(id=>$(id).addEventListener("input",renderVisits));
+["q","fProv","fRep","fPast","fNotif"].forEach(id=>$(id).addEventListener("input",renderVisits));
 
 /* Visit form */
 function openVisit(v){
@@ -873,6 +953,312 @@ function renderMasters(){
 $("xMasters").onclick=()=>{const sp=$("sp").value;
   exportXlsx("sevasmioi",[["Σεβάσμιοι",["Αρ.","Στοά","Επαρχία","Επώνυμο","Όνομα","Κινητό","Email","Έτος"],masterRows().filter(r=>!sp||r.province===sp).map(r=>[r.lodge.number,r.lodge.name,r.province,r.m?.surname||"",r.m?.name||"",r.m?.mobile||"",r.m?.email||"",r.m?.year||""])]],$("xMasters"))};
 
+/* ---------- Πρότζεκτ ΜΔ: new lodge, new body, other projects (editors only) ---------- */
+let projects=[],projOpen=null,projDirty=false,projTimer=0,projSaving=Promise.resolve(),assetsNs;
+const PTYPES={lodge:"Ίδρυση νέας Στοάς",body:"Ίδρυση νέου Σώματος",other:"Άλλο έργο"};
+const PSTATUS={plan:"Σχεδιασμός",active:"Σε εξέλιξη",hold:"Σε αναμονή",done:"Ολοκληρώθηκε"};
+const UNIT_LABEL=p=>p.type==="other"?"Ομάδες εργασίας":"Στοές";
+async function getAssets(){if(assetsNs===undefined){try{assetsNs=window.claude?await window.claude.use("assets"):null}catch(e){assetsNs=null}}return assetsNs}
+const blobUrl=id=>"/_blob/"+id;
+const memberById=id=>members.find(m=>String(m.id)===String(id));
+const daysTo=iso=>iso?Math.round((parseISO(iso)-parseISO(todayISO()))/864e5):null;
+function projDue(p){const d=daysTo(p.targetDate);if(p.status==="done")return "Ολοκληρώθηκε";if(d===null)return "Χωρίς ημερομηνία στόχου";return d<0?`Εκπρόθεσμο κατά ${-d} ${-d===1?"ημέρα":"ημέρες"}`:d===0?"Ο στόχος είναι σήμερα":`${d} ${d===1?"ημέρα":"ημέρες"} έως τον στόχο`}
+const initials=t=>String(t||"?").split(/\s+/).filter(w=>/^[A-Za-zΑ-Ωα-ωΆ-Ώά-ώ]/.test(w)).slice(0,3).map(w=>w[0].toUpperCase()).join("")||"?";
+const ASSET_ERR={too_large:"Το αρχείο ξεπερνά το όριο των 20 MB.",unsupported_type:"Επιτρέπονται εικόνες (JPG, PNG, GIF, WEBP) και PDF.",quota_or_state:"Ο χώρος αρχείων γέμισε ή η σελίδα δεν δέχεται αρχεία αυτή τη στιγμή.",rate_limited:"Πολλές μεταφορτώσεις μαζί — δοκιμάστε ξανά σε λίγο.",upstream_auth:"Ανανεώστε τη σελίδα ή συνδεθείτε ξανά.",not_granted:"Η μεταφόρτωση δεν επιτρέπεται σε αυτή την προβολή.",capability_disabled:"Η μεταφόρτωση δεν είναι διαθέσιμη σε αυτή την προβολή."};
+const assetErr=e=>ASSET_ERR[e?.code]||"Η μεταφόρτωση απέτυχε. Δοκιμάστε ξανά.";
+
+function renderProjects(){
+  const box=$("projList");if(!box)return;
+  $("projListView").hidden=!!projOpen;$("projEdit").hidden=!projOpen;
+  if(projOpen)return;
+  const q=fold($("pq").value),st=$("pst").value;
+  const list=projects.filter(p=>(!st||p.status===st)&&(!q||fold(`${p.title} ${PTYPES[p.type]||""}`).includes(q)))
+    .sort((a,b)=>(a.status==="done")-(b.status==="done")||(a.targetDate||"9999").localeCompare(b.targetDate||"9999"));
+  $("projStats").innerHTML=projects.length?`<span><b>${projects.length}</b> πρότζεκτ</span><span><b>${projects.filter(p=>p.status==="active").length}</b> σε εξέλιξη</span><span class="${projects.some(p=>p.status!=="done"&&daysTo(p.targetDate)<0)?"warn":""}"><b>${projects.filter(p=>p.status!=="done"&&daysTo(p.targetDate)<0).length}</b> εκπρόθεσμα</span>`:"";
+  box.innerHTML=list.length?`<div class="pgrid">${list.map(p=>{const late=p.status!=="done"&&daysTo(p.targetDate)<0;return `<button type="button" class="pcard" data-pid="${esc(p.id)}">
+    <div class="pcover">${p.cover?`<img src="${blobUrl(p.cover)}" alt="">`:`<span>${esc(initials(p.title))}</span>`}</div>
+    <div class="pbody"><div class="eyebrow">${esc(PTYPES[p.type]||"")}</div><div class="lodge">${esc(p.title||"Χωρίς τίτλο")}</div>
+      <div class="meta">Έναρξη ${p.startDate?fmtDate(p.startDate):"—"} · Στόχος ${p.targetDate?fmtDate(p.targetDate):"—"}</div>
+      <div class="vact"><span class="chip">${esc(PSTATUS[p.status]||"")}</span><span class="meta${late?" warn-t":""}">${esc(projDue(p))}</span></div>
+      <div class="meta">${(p.units||[]).length} ${UNIT_LABEL(p).toLowerCase()} · ${(p.memberIds||[]).length} μέλη · ${(p.contacts||[]).length} επαφές · ${(p.files||[]).length} αρχεία</div></div></button>`}).join("")}</div>`
+    :`<div class="empty">${projects.length?"Κανένα πρότζεκτ δεν ταιριάζει με την αναζήτηση.":"Δεν υπάρχουν ακόμη πρότζεκτ.<br>Πατήστε «Νέο πρότζεκτ» — π.χ. ίδρυση νέας Στοάς ή νέου Σώματος."}</div>`;
+  box.querySelectorAll("[data-pid]").forEach(b=>b.onclick=()=>openProject(b.dataset.pid));
+}
+["pq","pst"].forEach(id=>$(id).addEventListener("input",renderProjects));
+
+async function projWrite(p){
+  const {id,...data}=JSON.parse(JSON.stringify(p));
+  if(db)await db.collection("projects").doc(id).set(data);
+  const i=projects.findIndex(x=>x.id===id);if(i>=0)projects[i]={id,...data};else projects.push({id,...data});
+  if(!db)persistLocal();
+}
+function setSaveState(t,bad){const el=$("pSave");if(el){el.textContent=t;el.classList.toggle("warn-t",!!bad)}}
+function scheduleSave(now){projDirty=true;setSaveState("Αποθήκευση…");clearTimeout(projTimer);projTimer=setTimeout(projFlush,now?0:700)}
+function projFlush(){
+  clearTimeout(projTimer);
+  projSaving=projSaving.then(async()=>{
+    if(!projOpen||!projDirty)return;projDirty=false;projOpen.updatedAt=new Date().toISOString();
+    try{await projWrite(projOpen);setSaveState("✓ Αποθηκεύτηκε")}catch(e){projDirty=true;setSaveState("Η αποθήκευση απέτυχε — ελέγξτε τη σύνδεση",true)}
+  });return projSaving;
+}
+
+/* New project */
+$("addProj").onclick=()=>{
+  $("npTitle").value="";$("npType").value="lodge";$("npStart").value=todayISO();$("npTarget").value="";$("npUnits").value="4";
+  $("npUnitsRow").hidden=true;$("npErr").hidden=true;openOv("ovNewProj");
+};
+$("npType").addEventListener("input",()=>{$("npUnitsRow").hidden=$("npType").value!=="body"});
+$("formNewProj").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const title=$("npTitle").value.trim(),type=$("npType").value,n=Math.max(0,Math.min(50,parseInt($("npUnits").value,10)||0));
+  if(!title){showErr("npErr","Συμπληρώστε τίτλο.");return}
+  const p={id:newId("pj"),title,type,status:"plan",startDate:$("npStart").value,targetDate:$("npTarget").value,description:"",notes:"",cover:"",
+    units:type==="lodge"?[{name:title,leaderId:"",notes:""}]:type==="body"?Array.from({length:n},(_,i)=>({name:`Στοά ${i+1}`,leaderId:"",notes:""})):[],
+    memberIds:[],contacts:[],files:[],log:[],createdAt:new Date().toISOString()};
+  try{await projWrite(p)}catch(err){showErr("npErr","Η δημιουργία απέτυχε. Δοκιμάστε ξανά.");return}
+  closeOv($("formNewProj"));openProject(p.id);
+});
+
+/* Editor */
+function openProject(id){
+  const p=projects.find(x=>x.id===id);if(!p)return;
+  projOpen=JSON.parse(JSON.stringify(p));["units","memberIds","contacts","files","log"].forEach(k=>projOpen[k]=projOpen[k]||[]);
+  projDirty=false;renderProjects();renderProjectEditor();window.scrollTo(0,0);
+}
+async function closeProject(){await projFlush();projOpen=null;renderProjects()}
+const memberPickSource=words=>activeMembers().filter(m=>!words.length||words.every(w=>memberHay(m).includes(w))).slice(0,40)
+  .map(m=>({html:`<div class="who">${esc(m.s)} ${esc(m.f)}</div><div class="meta">${esc(memberLodges(m)||m.d||"")}</div>`,value:m}));
+const mContact=m=>[(m?.m||[])[0],(m?.e||[])[0]].filter(Boolean).join(" · ");
+function renderProjectEditor(){
+  const p=projOpen,ed=$("projEdit");if(!p)return;
+  const late=p.status!=="done"&&daysTo(p.targetDate)<0;
+  ed.innerHTML=`
+  <div class="toolbar" style="margin-top:20px">
+    <button type="button" class="btn ghost" id="pBack">← Όλα τα πρότζεκτ</button>
+    <span class="savestate" id="pSave"></span>
+    <span style="flex:1"></span>
+    <button type="button" class="btn" id="pReport">Αναφορά PDF</button>
+    <button type="button" class="btn danger" id="pDelete">Διαγραφή</button>
+  </div>
+  <div class="psec phead">
+    <div>
+      <div class="pcover big" id="pCoverBox">${p.cover?`<img src="${blobUrl(p.cover)}" alt="Εικόνα προφίλ">`:`<span>${esc(initials(p.title))}</span>`}</div>
+      <div class="toolbar" style="margin:8px 0 0">
+        <label class="btn sm" for="pCoverFile">${p.cover?"Αλλαγή εικόνας":"Εικόνα προφίλ"}</label><input type="file" id="pCoverFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+        ${p.cover?`<button type="button" class="btn ghost sm" id="pCoverDel">Αφαίρεση</button>`:""}
+      </div>
+    </div>
+    <div class="grid">
+      <div class="field full"><label for="pTitleIn">Τίτλος</label><input id="pTitleIn" data-f="title" value="${esc(p.title)}"></div>
+      <div class="field"><label for="pTypeIn">Είδος</label><select id="pTypeIn" data-f="type">${Object.entries(PTYPES).map(([k,v])=>`<option value="${k}" ${p.type===k?"selected":""}>${v}</option>`).join("")}</select></div>
+      <div class="field"><label for="pStatusIn">Κατάσταση</label><select id="pStatusIn" data-f="status">${Object.entries(PSTATUS).map(([k,v])=>`<option value="${k}" ${p.status===k?"selected":""}>${v}</option>`).join("")}</select></div>
+      <div class="field"><label for="pStartIn">Ημερομηνία έναρξης</label><input type="date" id="pStartIn" data-f="startDate" value="${esc(p.startDate||"")}"></div>
+      <div class="field"><label for="pTargetIn">Ημερομηνία στόχου</label><input type="date" id="pTargetIn" data-f="targetDate" value="${esc(p.targetDate||"")}"></div>
+      <p class="hint full ${late?"warn-t":""}" id="pDue">${esc(projDue(p))}</p>
+      <div class="field full"><label for="pDescIn">Περιγραφή</label><textarea id="pDescIn" data-f="description" style="min-height:90px">${esc(p.description||"")}</textarea></div>
+    </div>
+  </div>
+  <div class="psec"><h3>${UNIT_LABEL(p)} <small class="meta">${p.units.length}</small></h3>
+    <div id="pUnits" class="list"></div>
+    <div class="toolbar" style="margin-bottom:0">${p.type!=="lodge"?`<button type="button" class="btn sm" id="pUnitAdd">+ ${p.type==="other"?"Ομάδα":"Στοά"}</button>`:""}</div>
+  </div>
+  <div class="psec"><h3>${p.type==="body"?"Μέλη του Σώματος":p.type==="lodge"?"Μέλη της Στοάς":"Μέλη"} <small class="meta" id="pMemCount">${p.memberIds.length}</small></h3>
+    <div class="combo" style="max-width:520px"><input id="pMemQ" placeholder="Προσθήκη μέλους — πληκτρολογήστε όνομα ή επώνυμο…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="pMemList"><div class="combo-list" id="pMemList" role="listbox" hidden></div></div>
+    <div id="pMembers" style="margin-top:10px"></div>
+  </div>
+  <div class="psec"><h3>Επαφές & συνεργάτες <small class="meta">εκτός μελών</small></h3>
+    <div id="pContacts"></div>
+    <div class="toolbar" style="margin-bottom:0"><button type="button" class="btn sm" id="pContactAdd">+ Επαφή</button></div>
+  </div>
+  <div class="psec"><h3>Αρχεία & σύνδεσμοι <small class="meta" id="pFileCount">${p.files.length}</small></h3>
+    <div class="toolbar" style="margin-top:0">
+      <label class="btn sm" for="pFileIn" id="pFileLbl">+ Φωτογραφίες / PDF</label><input type="file" id="pFileIn" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple hidden>
+      <input id="pLinkTitle" placeholder="Τίτλος συνδέσμου" style="flex:1 1 160px;width:auto">
+      <input id="pLinkUrl" type="url" placeholder="https://…" style="flex:2 1 220px;width:auto">
+      <button type="button" class="btn sm" id="pLinkAdd">+ Σύνδεσμος</button>
+    </div>
+    <p class="hint" id="pFileStatus" aria-live="polite"></p><div class="err" id="pFileErr" hidden></div>
+    <div id="pFiles" class="files"></div>
+  </div>
+  <div class="psec"><h3>Πληροφορίες & ημερολόγιο εργασιών</h3>
+    <div class="grid" style="grid-template-columns:160px 1fr auto;align-items:end">
+      <div class="field"><label for="pLogDate">Ημερομηνία</label><input type="date" id="pLogDate" value="${todayISO()}"></div>
+      <div class="field"><label for="pLogText">Εργασία / πληροφορία</label><input id="pLogText" placeholder="π.χ. Συνάντηση με τα ιδρυτικά μέλη"></div>
+      <button type="button" class="btn primary" id="pLogAdd">Προσθήκη</button>
+    </div>
+    <div id="pLog" style="margin-top:8px"></div>
+  </div>
+  <div class="psec"><h3>Σημειώσεις</h3><textarea id="pNotesIn" data-f="notes" style="min-height:120px">${esc(p.notes||"")}</textarea></div>`;
+  ed.querySelectorAll("[data-f]").forEach(el=>el.addEventListener("input",()=>{
+    p[el.dataset.f]=el.value;
+    if(el.dataset.f==="type"){if(p.type==="lodge"&&!p.units.length)p.units=[{name:p.title,leaderId:"",notes:""}];scheduleSave(true);renderProjectEditor();return}
+    if(["targetDate","status"].includes(el.dataset.f)){const d=$("pDue");d.textContent=projDue(p);d.classList.toggle("warn-t",p.status!=="done"&&daysTo(p.targetDate)<0)}
+    scheduleSave();
+  }));
+  $("pBack").onclick=closeProject;
+  $("pDelete").onclick=()=>askConfirm(`Διαγραφή του πρότζεκτ «${p.title}» μαζί με τα αρχεία του;`,async()=>{
+    clearTimeout(projTimer);projDirty=false;
+    try{if(db)await db.collection("projects").doc(p.id).delete()}catch(e){toast("Η διαγραφή απέτυχε");return}
+    const a=await getAssets();if(a)for(const id of [p.cover,...p.files.map(f=>f.id)].filter(Boolean)){try{await a.delete(id)}catch(e){}}
+    projects=projects.filter(x=>x.id!==p.id);if(!db)persistLocal();projOpen=null;renderProjects();toast("Διαγράφηκε");
+  });
+  $("pReport").onclick=()=>projectReport(p);
+  // cover
+  getAssets().then(a=>{if(!a){["pCoverFile","pFileIn"].forEach(id=>{const l=document.querySelector(`label[for="${id}"]`);if(l)l.hidden=true});$("pFileStatus").textContent="Η μεταφόρτωση αρχείων είναι διαθέσιμη μόνο στη δημοσιευμένη σελίδα για όσους έχουν δικαίωμα επεξεργασίας. Μπορείτε να προσθέσετε συνδέσμους."}});
+  $("pCoverFile").onchange=async e=>{
+    const f=e.target.files[0];e.target.value="";if(!f)return;const a=await getAssets();if(!a)return;
+    setSaveState("Μεταφόρτωση εικόνας…");
+    try{const blob=await shrinkImage(f,1600);const res=await a.upload(blob,{type:"image/jpeg"});const old=p.cover;p.cover=res.id;scheduleSave(true);renderProjectEditor();if(old){try{await a.delete(old)}catch(err){}}}
+    catch(err){setSaveState(assetErr(err),true)}
+  };
+  if($("pCoverDel"))$("pCoverDel").onclick=async()=>{const old=p.cover;p.cover="";scheduleSave(true);renderProjectEditor();const a=await getAssets();if(a&&old){try{await a.delete(old)}catch(e){}}};
+  // units
+  const renderUnits=()=>{
+    $("pUnits").innerHTML=p.units.length?p.units.map((u,i)=>{const m=memberById(u.leaderId);return `<div class="unitrow">
+      <div class="field"><label for="pu-n${i}">${p.type==="lodge"?"Όνομα Στοάς":`${p.type==="other"?"Ομάδα":"Στοά"} ${i+1}`}</label><input id="pu-n${i}" data-un="${i}" value="${esc(u.name||"")}"></div>
+      <div class="field"><label for="pu-l${i}">Υπεύθυνος</label><div class="combo"><input id="pu-l${i}" data-ul="${i}" value="${esc(m?`${m.s} ${m.f}`:"")}" placeholder="Επιλογή από τα Μέλη…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="pu-list${i}"><div class="combo-list" id="pu-list${i}" role="listbox" hidden></div></div>${m?`<div class="meta">${esc(mContact(m))}</div>`:""}</div>
+      <div class="field"><label for="pu-t${i}">Σημειώσεις</label><input id="pu-t${i}" data-ut="${i}" value="${esc(u.notes||"")}"></div>
+      ${p.type!=="lodge"?`<button type="button" class="btn ghost sm" data-udel="${i}" aria-label="Αφαίρεση">✕</button>`:"<span></span>"}</div>`}).join(""):`<p class="hint">Δεν υπάρχουν ακόμη ${UNIT_LABEL(p).toLowerCase()}.</p>`;
+    $("pUnits").querySelectorAll("[data-un]").forEach(el=>el.oninput=()=>{p.units[el.dataset.un].name=el.value;scheduleSave()});
+    $("pUnits").querySelectorAll("[data-ut]").forEach(el=>el.oninput=()=>{p.units[el.dataset.ut].notes=el.value;scheduleSave()});
+    $("pUnits").querySelectorAll("[data-udel]").forEach(el=>el.onclick=()=>{p.units.splice(Number(el.dataset.udel),1);scheduleSave(true);renderProjectEditor()});
+    $("pUnits").querySelectorAll("[data-ul]").forEach(el=>{const i=Number(el.dataset.ul);
+      makeCombo(el,$("pu-list"+i),memberPickSource,it=>{p.units[i].leaderId=it.value.id;scheduleSave(true);renderUnits()});
+      el.addEventListener("input",()=>{if(!el.value.trim()&&p.units[i].leaderId){p.units[i].leaderId="";scheduleSave()}});});
+  };
+  renderUnits();
+  if($("pUnitAdd"))$("pUnitAdd").onclick=()=>{p.units.push({name:p.type==="other"?`Ομάδα ${p.units.length+1}`:`Στοά ${p.units.length+1}`,leaderId:"",notes:""});scheduleSave(true);renderProjectEditor()};
+  // members
+  const renderMembersList=()=>{
+    $("pMemCount").textContent=p.memberIds.length;
+    const ms=p.memberIds.map(id=>memberById(id)||{id,s:"(άγνωστο μέλος)",f:""}).sort((a,b)=>a.s.localeCompare(b.s,"el"));
+    $("pMembers").innerHTML=ms.length?`<div class="tablewrap"><table><thead><tr><th>Ονοματεπώνυμο</th><th>Στοές</th><th>Κινητό</th><th>Email</th><th></th></tr></thead><tbody>${ms.map(m=>`<tr><td><b>${esc(m.s)}</b> ${esc(m.f)}<div class="meta">${esc(m.d||"")}</div></td><td class="meta">${esc(memberLodges(m))}</td><td style="white-space:nowrap">${esc((m.m||[])[0]||"—")}</td><td>${esc((m.e||[])[0]||"—")}</td><td><button type="button" class="btn ghost sm" data-mdel="${esc(m.id)}" aria-label="Αφαίρεση">✕</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="hint">Δεν έχουν προστεθεί ακόμη μέλη.</p>`;
+    $("pMembers").querySelectorAll("[data-mdel]").forEach(b=>b.onclick=()=>{p.memberIds=p.memberIds.filter(x=>String(x)!==b.dataset.mdel);scheduleSave(true);renderMembersList()});
+  };
+  renderMembersList();
+  makeCombo($("pMemQ"),$("pMemList"),words=>memberPickSource(words).filter(it=>!p.memberIds.some(x=>String(x)===String(it.value.id))),it=>{p.memberIds.push(it.value.id);$("pMemQ").value="";scheduleSave(true);renderMembersList();toast(`Προστέθηκε: ${it.value.s} ${it.value.f}`)});
+  // contacts
+  const CF=[["name","Ονοματεπώνυμο"],["role","Ιδιότητα / φορέας"],["phone","Τηλέφωνο"],["email","Email"],["notes","Σημειώσεις"]];
+  const renderContacts=()=>{
+    $("pContacts").innerHTML=p.contacts.length?p.contacts.map((c,i)=>`<div class="crow">${CF.map(([k,l])=>`<div class="field"><label for="pc-${k}${i}">${l}</label><input id="pc-${k}${i}" data-c="${i}" data-k="${k}" value="${esc(c[k]||"")}" ${k==="email"?'type="email" inputmode="email"':k==="phone"?'type="tel" inputmode="tel"':""}></div>`).join("")}<button type="button" class="btn ghost sm" data-cdel="${i}" aria-label="Αφαίρεση">✕</button></div>`).join(""):`<p class="hint">Δεν υπάρχουν ακόμη εξωτερικές επαφές.</p>`;
+    $("pContacts").querySelectorAll("[data-c]").forEach(el=>el.oninput=()=>{p.contacts[el.dataset.c][el.dataset.k]=el.value;scheduleSave()});
+    $("pContacts").querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{p.contacts.splice(Number(b.dataset.cdel),1);scheduleSave(true);renderContacts()});
+  };
+  renderContacts();
+  $("pContactAdd").onclick=()=>{p.contacts.push({name:"",role:"",phone:"",email:"",notes:""});renderContacts();$("pc-name"+(p.contacts.length-1)).focus()};
+  // files & links
+  const renderFiles=()=>{
+    $("pFileCount").textContent=p.files.length;
+    $("pFiles").innerHTML=p.files.length?p.files.map((f,i)=>{const href=f.kind==="link"?f.url:blobUrl(f.id);return `<div class="fitem">
+      <a class="fthumb" href="${esc(href)}" target="_blank" rel="noopener">${f.kind==="image"?`<img src="${esc(href)}" alt="">`:f.kind==="pdf"?"PDF":"🔗"}</a>
+      <div class="fmeta"><div style="min-width:0"><div class="who" style="overflow-wrap:anywhere">${esc(f.name||"")}</div><div class="meta">${f.kind==="link"?esc(f.url.replace(/^https?:\/\//,"").slice(0,40)):`${f.kind==="pdf"?"PDF":"Φωτογραφία"} · ${fmtDate(f.addedAt||todayISO())}`}</div></div>
+      <button type="button" class="btn ghost sm" data-fdel="${i}" aria-label="Αφαίρεση">✕</button></div></div>`}).join(""):`<p class="hint">Δεν υπάρχουν ακόμη αρχεία ή σύνδεσμοι.</p>`;
+    $("pFiles").querySelectorAll("[data-fdel]").forEach(b=>b.onclick=()=>{const f=p.files[Number(b.dataset.fdel)];askConfirm(`Αφαίρεση του «${f.name}»;`,async()=>{p.files.splice(p.files.indexOf(f),1);scheduleSave(true);renderFiles();if(f.id){const a=await getAssets();if(a){try{await a.delete(f.id)}catch(e){}}}})});
+  };
+  renderFiles();
+  $("pFileIn").onchange=async e=>{
+    const fs=[...e.target.files];e.target.value="";const a=await getAssets();if(!a||!fs.length)return;
+    $("pFileErr").hidden=true;let ok=0;
+    for(const [n,f] of fs.entries()){
+      $("pFileStatus").textContent=`Μεταφόρτωση ${n+1} από ${fs.length}: ${f.name}…`;
+      const type=f.type==="application/pdf"||/\.pdf$/i.test(f.name)?"application/pdf":f.type;
+      try{const res=await a.upload(f,{type});p.files.push({id:res.id,name:f.name,kind:type==="application/pdf"?"pdf":"image",type:res.contentType,size:res.sizeBytes,addedAt:todayISO()});ok++;scheduleSave(true);renderFiles()}
+      catch(err){showErr("pFileErr",`${f.name}: ${assetErr(err)}`);if(!["too_large","unsupported_type"].includes(err?.code))break}
+    }
+    $("pFileStatus").textContent=ok?`✓ Ανέβηκαν ${ok} ${ok===1?"αρχείο":"αρχεία"}.`:"";
+  };
+  $("pLinkAdd").onclick=()=>{
+    let url=$("pLinkUrl").value.trim();const name=$("pLinkTitle").value.trim();
+    if(!url){showErr("pFileErr","Συμπληρώστε τη διεύθυνση του συνδέσμου.");return}
+    if(!/^https?:\/\//i.test(url))url="https://"+url;
+    $("pFileErr").hidden=true;p.files.push({kind:"link",name:name||url.replace(/^https?:\/\//,""),url,addedAt:todayISO()});
+    $("pLinkUrl").value="";$("pLinkTitle").value="";scheduleSave(true);renderFiles();
+  };
+  // log
+  const renderLog=()=>{
+    const L=[...p.log].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    $("pLog").innerHTML=L.length?L.map(l=>`<div class="logitem"><div class="num"><b>${esc(l.date?fmtDate(l.date):"—")}</b></div><div style="white-space:pre-wrap">${esc(l.text)}</div><button type="button" class="btn ghost sm" data-ldel="${esc(l.id)}" aria-label="Αφαίρεση">✕</button></div>`).join(""):`<p class="hint">Δεν υπάρχουν ακόμη καταχωρίσεις.</p>`;
+    $("pLog").querySelectorAll("[data-ldel]").forEach(b=>b.onclick=()=>{p.log=p.log.filter(l=>l.id!==b.dataset.ldel);scheduleSave(true);renderLog()});
+  };
+  renderLog();
+  $("pLogAdd").onclick=()=>{const t=$("pLogText").value.trim();if(!t){$("pLogText").focus();return}
+    p.log.push({id:newId("lg"),date:$("pLogDate").value||todayISO(),text:t});$("pLogText").value="";scheduleSave(true);renderLog()};
+  $("pLogText").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("pLogAdd").click()}});
+}
+async function shrinkImage(file,max){
+  const u=URL.createObjectURL(file);
+  try{const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=u});
+    const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement("canvas");
+    c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+    return await new Promise(ok=>c.toBlob(ok,"image/jpeg",.86));}
+  finally{URL.revokeObjectURL(u)}
+}
+async function imageData(src,max){
+  const r=await fetch(src);if(!r.ok)throw new Error("img");const blob=await r.blob(),small=await shrinkImage(blob,max);
+  const data=await new Promise(ok=>{const fr=new FileReader();fr.onload=()=>ok(fr.result);fr.readAsDataURL(small)});
+  const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=data});
+  return {data,w:img.naturalWidth,h:img.naturalHeight};
+}
+
+/* Elegant A4 report for one project */
+async function projectReport(p){
+  await projFlush();
+  if(!window.jspdf?.jsPDF||!window.PDF_FONTS){toast("Η δημιουργία PDF δεν φόρτωσε. Ανανεώστε τη σελίδα.");return}
+  const btn=$("pReport");btn.disabled=true;btn.textContent="Δημιουργία…";
+  try{
+    let cover=null;if(p.cover){try{cover=await imageData(blobUrl(p.cover),1400)}catch(e){}}
+    const doc=buildProjectPdf(p,cover),slug=(p.title||"project").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9Α-Ωα-ω]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+    await saveFile(`project-${slug||"report"}-${fmtDate(todayISO()).replace(/\//g,"")}.pdf`,doc.output("blob"),"pFileErr");
+  }catch(e){toast("Η δημιουργία του PDF απέτυχε.")}
+  finally{btn.disabled=false;btn.textContent="Αναφορά PDF"}
+}
+function buildProjectPdf(p,cover){
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
+  doc.addFileToVFS("DV.ttf",PDF_FONTS.r);doc.addFont("DV.ttf","DV","normal");
+  doc.addFileToVFS("DVB.ttf",PDF_FONTS.b);doc.addFont("DVB.ttf","DV","bold");doc.setFont("DV","normal");
+  const W=210,M=14,INK=[21,32,58],LAPIS=[31,63,143],BRASS=[156,122,34],MUTED=[91,103,128],WARN=[154,74,18],LINE=[221,226,236];
+  const now=new Date(),gen=`${fmtDate(todayISO())} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  // cover band
+  doc.setFillColor(...INK);doc.rect(0,0,W,cover?62:46,"F");
+  doc.setFont("DV","normal");doc.setFontSize(7.5);doc.setTextColor(214,190,120);
+  doc.text("ΕΘΝΙΚΗ ΜΕΓΑΛΗ ΣΤΟΑ ΤΗΣ ΕΛΛΑΔΟΣ  ·  ΠΡΟΤΖΕΚΤ ΜΕΓΑΛΟΥ ΔΙΔΑΣΚΑΛΟΥ",M,12);
+  let tw=W-2*M,iw=0;
+  if(cover){iw=62;const ih=Math.min(46,iw*cover.h/cover.w),iy=8+(46-ih)/2;doc.addImage(cover.data,"JPEG",W-M-iw,iy,iw,ih);tw=W-3*M-iw}
+  doc.setFont("DV","bold");doc.setFontSize(19);doc.setTextColor(255,255,255);
+  const tl=doc.splitTextToSize(p.title||"Χωρίς τίτλο",tw).slice(0,3);doc.text(tl,M,22);
+  let ty=22+tl.length*7.6;
+  doc.setFont("DV","normal");doc.setFontSize(9.5);doc.setTextColor(214,190,120);doc.text(`${PTYPES[p.type]||""}  ·  ${PSTATUS[p.status]||""}`,M,ty);
+  let y=(cover?62:46)+8;
+  // key facts
+  const late=p.status!=="done"&&daysTo(p.targetDate)<0;
+  doc.autoTable({startY:y,margin:{left:M,right:M},theme:"plain",
+    body:[[{content:"ΕΝΑΡΞΗ",styles:{textColor:MUTED,fontSize:7}},{content:"ΣΤΟΧΟΣ",styles:{textColor:MUTED,fontSize:7}},{content:"ΠΡΟΘΕΣΜΙΑ",styles:{textColor:MUTED,fontSize:7}},{content:"ΣΥΝΘΕΣΗ",styles:{textColor:MUTED,fontSize:7}}],
+          [p.startDate?fmtDate(p.startDate):"—",p.targetDate?fmtDate(p.targetDate):"—",{content:projDue(p),styles:{textColor:late?WARN:INK}},`${p.units.length} ${UNIT_LABEL(p).toLowerCase()} · ${p.memberIds.length} μέλη`]],
+    styles:{font:"DV",fontSize:10,textColor:INK,cellPadding:{top:1.2,bottom:1.2,left:0,right:4}},didParseCell:h=>{if(h.row.index===1)h.cell.styles.fontStyle="bold"}});
+  y=doc.lastAutoTable.finalY+4;doc.setDrawColor(...LINE);doc.setLineWidth(.3);doc.line(M,y,W-M,y);y+=6;
+  const section=(t,n)=>{if(y>262){doc.addPage();y=24}doc.setFont("DV","bold");doc.setFontSize(9);doc.setTextColor(...BRASS);doc.text(grUpper(t)+(n!=null?`  ·  ${n}`:""),M,y);doc.setDrawColor(...BRASS);doc.setLineWidth(.4);doc.line(M,y+1.6,W-M,y+1.6);y+=6};
+  const para=t=>{doc.setFont("DV","normal");doc.setFontSize(9.5);doc.setTextColor(...INK);doc.splitTextToSize(t,W-2*M).forEach(l=>{if(y>278){doc.addPage();y=24}doc.text(l,M,y);y+=4.6});y+=4};
+  const table=(head,body,widths)=>{doc.autoTable({startY:y,head:[head],body,margin:{left:M,right:M,top:22,bottom:16},theme:"grid",
+    styles:{font:"DV",fontSize:8.4,textColor:INK,cellPadding:2,lineColor:LINE,lineWidth:.2,valign:"top",overflow:"linebreak"},
+    headStyles:{font:"DV",fontStyle:"bold",fillColor:[243,245,249],textColor:LAPIS,fontSize:8},columnStyles:widths||{},rowPageBreak:"avoid"});y=doc.lastAutoTable.finalY+8};
+  if(p.description){section("Περιγραφή");para(p.description)}
+  if(p.units.length){section(UNIT_LABEL(p),p.units.length);
+    table(["#",p.type==="other"?"Ομάδα":"Στοά","Υπεύθυνος","Κινητό","Email","Σημειώσεις"],p.units.map((u,i)=>{const m=memberById(u.leaderId);return [i+1,u.name||"",m?`${m.s} ${m.f}`:"—",(m?.m||[])[0]||"",(m?.e||[])[0]||"",u.notes||""]}),{0:{cellWidth:8},1:{cellWidth:36,fontStyle:"bold"},2:{cellWidth:38},3:{cellWidth:24}})}
+  if(p.memberIds.length){const ms=p.memberIds.map(id=>memberById(id)).filter(Boolean).sort((a,b)=>a.s.localeCompare(b.s,"el"));
+    section(p.type==="body"?"Μέλη του Σώματος":p.type==="lodge"?"Μέλη της Στοάς":"Μέλη",ms.length);
+    table(["#","Ονοματεπώνυμο","Στοές","Κινητό","Email"],ms.map((m,i)=>[i+1,`${m.s} ${m.f}`,memberLodges(m),(m.m||[])[0]||"",(m.e||[])[0]||""]),{0:{cellWidth:8},1:{cellWidth:44,fontStyle:"bold"},3:{cellWidth:24}})}
+  const cs=p.contacts.filter(c=>c.name||c.email||c.phone);
+  if(cs.length){section("Επαφές & συνεργάτες",cs.length);table(["Ονοματεπώνυμο","Ιδιότητα / φορέας","Τηλέφωνο","Email","Σημειώσεις"],cs.map(c=>[c.name||"",c.role||"",c.phone||"",c.email||"",c.notes||""]),{0:{fontStyle:"bold",cellWidth:38}})}
+  if(p.log.length){section("Ημερολόγιο εργασιών",p.log.length);table(["Ημερομηνία","Εργασία / πληροφορία"],[...p.log].sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(l=>[l.date?fmtDate(l.date):"—",l.text]),{0:{cellWidth:26,fontStyle:"bold"}})}
+  if(p.files.length){section("Αρχεία & σύνδεσμοι",p.files.length);table(["Τίτλος","Είδος","Σύνδεσμος / ημερομηνία"],p.files.map(f=>[f.name||"",f.kind==="link"?"Σύνδεσμος":f.kind==="pdf"?"PDF":"Φωτογραφία",f.kind==="link"?f.url:(f.addedAt?fmtDate(f.addedAt):"")]),{0:{fontStyle:"bold",cellWidth:70},1:{cellWidth:24}})}
+  if(p.notes){section("Σημειώσεις");para(p.notes)}
+  const n=doc.getNumberOfPages();
+  for(let i=1;i<=n;i++){doc.setPage(i);
+    if(i>1){doc.setFont("DV","normal");doc.setFontSize(7.5);doc.setTextColor(...BRASS);doc.text("ΕΘΝΙΚΗ ΜΕΓΑΛΗ ΣΤΟΑ ΤΗΣ ΕΛΛΑΔΟΣ  ·  ΠΡΟΤΖΕΚΤ ΜΕΓΑΛΟΥ ΔΙΔΑΣΚΑΛΟΥ",M,11);doc.setFont("DV","bold");doc.setFontSize(10);doc.setTextColor(...INK);doc.text(doc.splitTextToSize(p.title||"",W-2*M)[0],M,16.5);doc.setDrawColor(...INK);doc.setLineWidth(.4);doc.line(M,18.5,W-M,18.5)}
+    doc.setFont("DV","normal");doc.setFontSize(7.5);doc.setTextColor(...MUTED);doc.text(`Εκδόθηκε ${gen}`,M,289);doc.text(`Σελίδα ${i} από ${n}`,W-M,289,{align:"right"})}
+  return doc;
+}
+
 /* ---------- Emails: province (Publish) and representative ---------- */
 const SIGN="Με Τεκτονικούς χαιρετισμούς,\n\nΠσεβ. Αδ. Δημήτριος Σκιαδόπουλος\nΜέγας Γραμματεύς";
 const PUB_SUBJECT="Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών της Επαρχίας σας";
@@ -888,7 +1274,11 @@ function updMailto(){$("nMailto").href=`mailto:${encodeURIComponent(mailTo().joi
 ["nTo","nSubj","nBody"].forEach(id=>$(id).addEventListener("input",()=>{updMailto();disarmSend()}));
 let sendTimer=0;
 function disarmSend(){clearTimeout(sendTimer);delete $("nSend").dataset.armed;$("nSend").textContent="Αποστολή μέσω Gmail"}
-function openMail({title,to,subject,body,hint}){
+let mailCtx={};
+function openMail({title,to,subject,body,hint,attach,onSent}){
+  mailCtx={attach,onSent};$("nMark").hidden=!onSent;
+  $("nAttach").hidden=!attach;$("nAttach").innerHTML=attach?`📎 Συνημμένο: <a href="#" id="nIcs">${esc(attach.filename)}</a> — ${esc(attach.label||"")}`:"";
+  if(attach)$("nIcs").onclick=e=>{e.preventDefault();saveFile(attach.filename,new Blob([attach.text],{type:attach.mimeType}),"nErr")};
   $("nTitle").textContent=title;$("nTo").value=to||"";$("nSubj").value=subject;$("nBody").value=body;
   $("nHint").textContent=hint||"";$("nHint").hidden=!hint;$("nErr").hidden=true;$("nStatus").textContent="";
   disarmSend();updMailto();openOv("ovNote");
@@ -913,9 +1303,11 @@ async function gmail(tool){
   const sending=tool==="send_message";
   ["nSend","nDraft"].forEach(id=>$(id).disabled=true);$("nStatus").textContent=sending?"Αποστολή…":"Αποθήκευση πρόχειρου…";
   try{
-    const res=await m.callTool("Gmail",tool,{to,subject:$("nSubj").value,body:$("nBody").value});
+    const input={to,subject:$("nSubj").value,body:$("nBody").value};
+    if(mailCtx.attach)input.attachments=[{content:b64(mailCtx.attach.text),filename:mailCtx.attach.filename,mimeType:mailCtx.attach.mimeType}];
+    const res=await m.callTool("Gmail",tool,input);
     const t=new Date().toLocaleTimeString("el-GR",{hour:"2-digit",minute:"2-digit"});
-    if(sending){$("nStatus").textContent=`✓ Στάλθηκε στις ${t} προς ${to.join(", ")}.`;toast("Το email στάλθηκε")}
+    if(sending){$("nStatus").textContent=`✓ Στάλθηκε στις ${t} προς ${to.join(", ")}.`;toast("Το email στάλθηκε");if(mailCtx.onSent){await mailCtx.onSent();$("nMark").hidden=true}}
     else{const url=res?.payload?.viewUrl;$("nStatus").innerHTML=`✓ Αποθηκεύτηκε ως πρόχειρο στο Gmail (${t}).${url?` <a href="${esc(url)}" target="_blank" rel="noopener">Άνοιγμα πρόχειρου</a>`:""}`;toast("Αποθηκεύτηκε ως πρόχειρο")}
   }catch(e){
     $("nStatus").textContent="";
@@ -934,9 +1326,30 @@ $("nSend").onclick=()=>{
   disarmSend();gmail("send_message");
 };
 $("nDraft").onclick=()=>gmail("create_draft");
+$("nMark").onclick=async()=>{if(mailCtx.onSent){await mailCtx.onSent();$("nMark").hidden=true;$("nStatus").textContent="✓ Σημειώθηκε ως σταλμένο.";toast("Σημειώθηκε")}};
+// Notification records on a visit stay valid only while its date (and representative) are unchanged
+const repNotified=v=>v?.repNotified&&v.repNotified.repId===(v.repId||"")&&v.repNotified.date===v.date?v.repNotified:null;
+const provNotified=v=>v?.provNotified&&v.provNotified.date===v.date&&(v.provNotified.repId||"")===(v.repId||"")?v.provNotified:null;
+async function markVisits(ids,field,repId){
+  for(const id of ids){const v=visits.find(x=>x.id===id);if(!v)continue;
+    await save("visits",v.id,{...strip(v),[field]:{at:todayISO(),date:v.date,repId:repId??(v.repId||"")}},true)}
+  render();if(!$("ovPub").hidden)renderPub();
+}
+const b64=s=>{const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=0x8000)x+=String.fromCharCode(...b.subarray(i,i+0x8000));return btoa(x)};
+// Calendar invitation: one all-day event per installation
+function icsFor(list){
+  const q=s=>String(s||"").replace(/[\\;,]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  const ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  const ev=list.map(v=>{const d=parseISO(v.date),n=parseISO(v.date);n.setDate(n.getDate()+1);
+    return ["BEGIN:VEVENT",`UID:${v.id||ymd(d)+"-"+(v.number||"x")}@nglg-lodge-visits`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${ymd(d)}`,`DTEND;VALUE=DATE:${ymd(n)}`,
+      `SUMMARY:${q(`Εγκατάσταση Σεβασμίου — ${lodgeRef(v)}`)}`,v.location?`LOCATION:${q(v.location)}`:"",
+      `DESCRIPTION:${q(`Εκπροσώπηση του Μεγάλου Διδασκάλου.${v.province?` ${provByShort(v.province)?.full||v.province}.`:""} Η ώρα έναρξης θα επιβεβαιωθεί από τη Στοά.`)}`,"END:VEVENT"].filter(Boolean).join("\r\n")});
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//NGLG//Lodge Visits//EL","CALSCALE:GREGORIAN","METHOD:PUBLISH",...ev,"END:VCALENDAR"].join("\r\n")+"\r\n";
+}
 
 // Representative briefing: one email for one representative's visits
-function repMail(r,list){
+function repMailContent(r,list){
   list=[...list].sort((a,b)=>a.date.localeCompare(b.date));
   const one=list.length===1,v=list[0];
   const item=v=>{const p=provByShort(v.province);return `${lodgeRef(v)}
@@ -954,16 +1367,58 @@ ${one?item(v):list.map((v,i)=>`${i+1}. ${item(v)}`).join("\n\n")}
 Σας ευχαριστούμε θερμά για την εκπροσώπηση.
 
 ${SIGN}`;
-  openMail({title:"Ενημέρωση Εκπροσώπου",to:r.email||"",
-    subject:one?`Ενημέρωση Εκπροσώπησης ΜΔ — Εγκατάσταση Σεβασμίου ${lodgeRef(v)} — ${dayStr(v.date)}`:"Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών",
-    body,hint:r.email?"":`Ο ${r.surname} ${r.name} δεν έχει email. Συμπληρώστε το παρακάτω ή προσθέστε το στην καρτέλα «Εκπρόσωποι».`});
+  return {list,subject:one?`Ενημέρωση Εκπροσώπησης ΜΔ — Εγκατάσταση Σεβασμίου ${lodgeRef(v)} — ${dayStr(v.date)}`:"Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών",body,
+    attach:{filename:one?`egkatastasi-${v.number||"stoa"}.ics`:"egkatastaseis.ics",mimeType:"text/calendar",text:icsFor(list),label:"πρόσκληση ημερολογίου"}};
+}
+function repMail(r,list){
+  const c=repMailContent(r,list),ids=c.list.map(v=>v.id).filter(Boolean);
+  openMail({title:"Ενημέρωση Εκπροσώπου",to:r.email||"",subject:c.subject,body:c.body,attach:c.attach,
+    onSent:ids.length?()=>markVisits(ids,"repNotified",r.id):null,
+    hint:r.email?"":`Ο ${r.surname} ${r.name} δεν έχει email. Συμπληρώστε το παρακάτω ή προσθέστε το στην καρτέλα «Εκπρόσωποι».`});
 }
 $("vRepMail").onclick=()=>{
   const r=reps.find(r=>repOpt(r)===$("vRep").value.trim()),date=$("vDate").value,lodge=clean($("vLodge").value);
   if(!date||!lodge){showErr("vErr","Συμπληρώστε πρώτα ημερομηνία και Στοά.");return}
   if(!r){showErr("vErr","Επιλέξτε πρώτα εκπρόσωπο από τη λίστα αναζήτησης.");return}
   $("vErr").hidden=true;
-  repMail(r,[{date,lodge,number:$("vNo").value.trim(),location:$("vLoc").value.trim(),province:$("vProv").value}]);
+  repMail(r,[{id:editingVisit?.id,date,lodge,number:$("vNo").value.trim(),location:$("vLoc").value.trim(),province:$("vProv").value}]);
+};
+
+// Bulk briefing: one email per representative, sent one after another after a confirming second click
+let bulkItems=[],bulkTimer=0;
+function bulkDisarm(){clearTimeout(bulkTimer);delete $("bulkSend").dataset.armed;const n=bulkItems.filter(b=>b.on&&!b.done).length;$("bulkSend").textContent=`Αποστολή σε ${n} ${n===1?"εκπρόσωπο":"εκπροσώπους"}`;$("bulkSend").disabled=!n}
+function renderBulk(){
+  $("bulkList").innerHTML=bulkItems.map((b,i)=>`<div class="reprow"><label class="chk" style="color:var(--ink);white-space:normal"><input type="checkbox" data-bi="${i}" ${b.on?"checked":""} ${b.ok&&!b.done?"":"disabled"}> <span><b>${esc(b.r.surname)} ${esc(b.r.name)}</b> <span class="meta">· ${b.vs.length} ${b.vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${b.ok?esc(b.r.email):"χωρίς έγκυρο email"}</span></span></label>
+    <span>${b.done?'<span class="okpill">✓ Στάλθηκε</span>':b.err?`<span class="pill-warn">${esc(b.err)}</span>`:""} <button type="button" class="btn ghost sm" data-bv="${i}">Προβολή</button></span></div>`).join("");
+  $("bulkList").querySelectorAll("[data-bi]").forEach(c=>c.onchange=()=>{bulkItems[c.dataset.bi].on=c.checked;bulkDisarm()});
+  $("bulkList").querySelectorAll("[data-bv]").forEach(c=>c.onclick=()=>{const b=bulkItems[c.dataset.bv];repMail(b.r,b.vs)});
+  const s=bulkItems.find(b=>b.ok)||bulkItems[0];$("bulkSample").textContent=s?(c=>`Θέμα: ${c.subject}\n\n${c.body}`)(repMailContent(s.r,s.vs)):"";
+  bulkDisarm();
+}
+function openBulk(groups){
+  bulkItems=groups.map(([r,vs])=>{const ok=EMAIL_RE.test(r.email||"");return {r,vs,ok,on:ok,done:false,err:""}});
+  $("bulkErr").hidden=true;$("bulkStatus").textContent="";renderBulk();openOv("ovBulk");
+  getMcp().then(m=>{if(!m){$("bulkSend").disabled=true;showErr("bulkErr","Η μαζική αποστολή γίνεται μέσω Gmail και δεν είναι διαθέσιμη εδώ. Στείλτε από «Προβολή» για κάθε εκπρόσωπο.")}});
+}
+$("bulkSend").onclick=async()=>{
+  const todo=bulkItems.filter(b=>b.on&&!b.done);if(!todo.length)return;
+  if(!$("bulkSend").dataset.armed){$("bulkSend").dataset.armed="1";$("bulkSend").textContent=`Επιβεβαίωση: αποστολή ${todo.length} email`;clearTimeout(bulkTimer);bulkTimer=setTimeout(bulkDisarm,6000);return}
+  clearTimeout(bulkTimer);delete $("bulkSend").dataset.armed;$("bulkSend").disabled=true;$("bulkErr").hidden=true;
+  const m=await getMcp();if(!m){showErr("bulkErr","Η αποστολή μέσω Gmail δεν είναι διαθέσιμη εδώ.");return}
+  let sent=0;
+  for(const b of todo){
+    $("bulkStatus").textContent=`Αποστολή ${sent+1} από ${todo.length}: ${b.r.surname} ${b.r.name}…`;
+    const c=repMailContent(b.r,b.vs);
+    try{
+      await m.callTool("Gmail","send_message",{to:[b.r.email],subject:c.subject,body:c.body,attachments:[{content:b64(c.attach.text),filename:c.attach.filename,mimeType:c.attach.mimeType}]});
+      b.done=true;b.err="";sent++;await markVisits(c.list.map(v=>v.id).filter(Boolean),"repNotified",b.r.id);
+    }catch(e){
+      b.err=e?.code==="tool_error"?"Απορρίφθηκε":"Δεν στάλθηκε";renderBulk();
+      if(e?.code!=="tool_error"){showErr("bulkErr",(GMAIL_ERR[e?.code]||"Η αποστολή διακόπηκε. Για τον τελευταίο εκπρόσωπο ελέγξτε τα «Απεσταλμένα» στο Gmail πριν το στείλετε ξανά.")+` Στάλθηκαν ${sent} από ${todo.length}.`);break}
+    }
+    renderBulk();
+  }
+  $("bulkStatus").textContent=`✓ Στάλθηκαν ${sent} από ${todo.length} email.`;toast(`Στάλθηκαν ${sent} email`);renderBulk();
 };
 
 // Publish: the province's installations in a date range, with their representatives
@@ -981,9 +1436,11 @@ function renderPub(){
   $("pubMail").textContent=p?.email?`Προς: ${p.title||"Γραμματεία"} — ${p.email}`:"Η Επαρχία δεν έχει email Γραμματείας (καρτέλα «Επαρχίες»).";
   const unas=rows.filter(v=>!repById(v.repId)).length;
   $("pubCount").textContent=`${rows.length} ${rows.length===1?"Εγκατάσταση":"Εγκαταστάσεις"}${unas?` · ${unas} χωρίς εκπρόσωπο`:""} · ${miss.length} Στοές χωρίς ημερομηνία`;
-  $("pubPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος</th><th>Εκπρόσωπος ΜΔ</th></tr></thead><tbody>${rows.map(v=>{const r=repById(v.repId);return `<tr${pcStyle(v.province)}><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td><td>${esc(v.location||"—")}</td><td>${r?esc(repFull(r)):`<span class="nr">Δεν έχει οριστεί</span>`}</td></tr>`}).join("")}</tbody></table>`:`<div class="empty" style="margin:0">Δεν υπάρχουν Εγκαταστάσεις σε αυτό το διάστημα.</div>`;
+  $("pubPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος</th><th>Εκπρόσωπος ΜΔ</th></tr></thead><tbody>${rows.map(v=>{const r=repById(v.repId);return `<tr${pcStyle(v.province)}><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td><td>${esc(v.location||"—")}</td><td>${r?esc(repFull(r)):`<span class="nr">Δεν έχει οριστεί</span>`}${repNotified(v)?' <span class="okpill">✓ ενημ.</span>':""}${provNotified(v)?' <span class="okpill">✓ Επαρχία</span>':""}</td></tr>`}).join("")}</tbody></table>`:`<div class="empty" style="margin:0">Δεν υπάρχουν Εγκαταστάσεις σε αυτό το διάστημα.</div>`;
   const byRep=new Map();rows.forEach(v=>{const r=repById(v.repId);if(r){if(!byRep.has(r.id))byRep.set(r.id,[]);byRep.get(r.id).push(v)}});
-  $("pubReps").innerHTML=byRep.size?[...byRep].map(([id,vs])=>{const r=repById(id);return `<div class="reprow"><div style="min-width:0"><b>${esc(r.surname)} ${esc(r.name)}</b> <span class="meta">· ${vs.length} ${vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${r.email?esc(r.email):"χωρίς email"}${r.mobile?` · ${esc(r.mobile)}`:""}</span></div><button type="button" class="btn ghost sm" data-repmail="${esc(id)}">Email εκπροσώπου</button></div>`}).join(""):`<p class="hint">Δεν έχουν οριστεί ακόμη εκπρόσωποι σε αυτές τις Εγκαταστάσεις.</p>`;
+  const pending=[...byRep].filter(([,vs])=>vs.some(v=>!repNotified(v)));
+  $("pubReps").innerHTML=byRep.size?(pending.length?`<div class="toolbar" style="margin:4px 0 8px"><button type="button" class="btn primary sm" id="pubBulk">Μαζική ενημέρωση εκπροσώπων (${pending.length})</button></div>`:`<p class="hint">✓ Όλοι οι εκπρόσωποι έχουν ενημερωθεί.</p>`)+[...byRep].map(([id,vs])=>{const r=repById(id),done=vs.every(v=>repNotified(v));return `<div class="reprow"><div style="min-width:0"><b>${esc(r.surname)} ${esc(r.name)}</b> <span class="meta">· ${vs.length} ${vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${r.email?esc(r.email):"χωρίς email"}${r.mobile?` · ${esc(r.mobile)}`:""}</span>${done?' <span class="okpill">✓ ενημερώθηκε</span>':""}</div><button type="button" class="btn ghost sm" data-repmail="${esc(id)}">${done?"Ξανά αποστολή":"Email εκπροσώπου"}</button></div>`}).join(""):`<p class="hint">Δεν έχουν οριστεί ακόμη εκπρόσωποι σε αυτές τις Εγκαταστάσεις.</p>`;
+  if($("pubBulk"))$("pubBulk").onclick=()=>openBulk(pending.map(([id,vs])=>[repById(id),vs.filter(v=>!repNotified(v))]));
   $("pubReps").querySelectorAll("[data-repmail]").forEach(b=>b.onclick=()=>repMail(repById(b.dataset.repmail),byRep.get(b.dataset.repmail)));
   $("pubErr").hidden=true;
 }
@@ -1015,6 +1472,7 @@ $("pubCompose").onclick=()=>{
   const p=provByShort($("pubProv").value),rows=pubRows(),miss=$("pubMissing").checked?pubMissing():[];
   if(!rows.length&&!miss.length){showErr("pubErr","Δεν υπάρχουν Εγκαταστάσεις για αποστολή σε αυτό το διάστημα.");return}
   openMail({title:"Publish — Ενημέρωση Επαρχίας",to:p?.email||"",subject:PUB_SUBJECT,body:provinceMailBody(p,rows,miss),
+    onSent:rows.length?()=>markVisits(rows.map(v=>v.id),"provNotified"):null,
     hint:p?.email?"":"Η Επαρχία δεν έχει email Γραμματείας — συμπληρώστε το παρακάτω."});
 };
 document.querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",async()=>{
@@ -1027,6 +1485,7 @@ $("formVisit").addEventListener("submit",async e=>{
   const rv=$("vRep").value.trim();
   if(rv){const r=reps.find(r=>repOpt(r)===rv);if(!r){showErr("vErr","Επιλέξτε εκπρόσωπο από τη λίστα αναζήτησης (πληκτρολογήστε όνομα ή επώνυμο).");return}data.repId=r.id}
   const id=editingVisit?.id||newId("v");
+  ["repNotified","provNotified"].forEach(k=>{if(editingVisit?.[k])data[k]=editingVisit[k]});
   if(await save("visits",id,data)){closeOv($("formVisit"));toast("Αποθηκεύτηκε")}
 });
 $("vDel").onclick=()=>askConfirm(`Διαγραφή της επίσκεψης στη Στοά «${editingVisit.lodge}»;`,async()=>{if(await remove("visits",editingVisit.id)){$("ovVisit").hidden=true;toast("Διαγράφηκε")}});
@@ -1209,12 +1668,12 @@ function newId(p){return p+Date.now().toString(36)+Math.random().toString(36).sl
 function strip(o){const {id,...r}=o;return r}
 function showErr(id,msg){$(id).textContent=msg;$(id).hidden=false}
 const LKEY="lvr-data-v1";
-function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
+function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters,projects}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
 function loadLocal(){
   let d=null;try{d=JSON.parse(localStorage.getItem(LKEY)||"null")}catch(e){}
   const seed=window.SEED||{};
   visits=d?.visits||seed.visits||[];reps=d?.reps||seed.reps||[];provinces=d?.provinces||seed.provinces||[];
-  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];members=d?.members||[];officers=d?.officers||[];masters=d?.masters||[];
+  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];members=d?.members||[];officers=d?.officers||[];masters=d?.masters||[];projects=d?.projects||[];
   if(!d)persistLocal();
 }
 // Merges SEED.updates not yet applied: new lodges, lodge locations (only where empty), lodgeChanges
@@ -1273,7 +1732,7 @@ async function remove(col,id){
   render();return true;
 }
 function mergeReps(){reps=repsRaw.map(r=>{const c=repContacts[r.id];return c&&typeof c==="object"?{...r,...c}:r})}
-function renderEditState(){$("tab-members").hidden=!canWrite;if(!canWrite&&!$("view-members").hidden)showTab("visits");["addVisit","importVisits","pubBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
+function renderEditState(){$("tab-members").hidden=!canWrite;$("tab-projects").hidden=!canWrite;if(!canWrite&&(!$("view-members").hidden||!$("view-projects").hidden))showTab("visits");["addVisit","importVisits","pubBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
 
 render();
 (async()=>{
@@ -1286,14 +1745,14 @@ render();
     const n=$("storeNotice");n.textContent="Τα δεδομένα αποθηκεύονται μόνο σε αυτόν τον browser. Κρατάτε τακτικά αντίγραφο με την «Εξαγωγή».";n.hidden=false;
     $("backupBar").hidden=false;
     $("exportBtn").onclick=()=>{
-      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters},null,2)],{type:"application/json"});
+      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters,projects},null,2)],{type:"application/json"});
       const d=new Date(),stamp=String(d.getDate()).padStart(2,"0")+String(d.getMonth()+1).padStart(2,"0")+String(d.getFullYear()).slice(2);
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`lodge-visits-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();
     };
     $("importFile").onchange=async e=>{
       const f=e.target.files[0];if(!f)return;
       try{const d=JSON.parse(await f.text());if(!Array.isArray(d.visits)||!Array.isArray(d.lodges))throw 0;
-        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};seedApplied=d.seedApplied||[];members=d.members||[];officers=d.officers||[];masters=d.masters||[];persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
+        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};seedApplied=d.seedApplied||[];members=d.members||[];officers=d.officers||[];masters=d.masters||[];projects=d.projects||[];persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
       catch(err){toast("Το αρχείο δεν είναι έγκυρο αντίγραφο")}
       e.target.value="";
     };
@@ -1307,6 +1766,8 @@ render();
     if(added.length){try{await db.doc("settings/seed").set({applied:[...seedApplied,...added]})}catch(e){}}})}};
   sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>{repsRaw=a;mergeReps()});
   // Rep contacts are readable by editors only; viewers simply get none
+  // Projects are editors-only: a refused read hides the tab
+  db.collection("projects").onSnapshot(s=>{projects=s.docs.map(d=>({id:d.id,...d.data()}));renderProjects()},()=>{projects=[];$("tab-projects").hidden=true;if(!$("view-projects").hidden)showTab("visits")});
   db.doc("officers/all").onSnapshot(d=>{const x=(d.exists&&d.data())||{};officers=x.items||[];officerHonors=x.honors||[];render()},()=>{officers=[];officerHonors=[];render()});
   db.doc("masters/all").onSnapshot(d=>{masters=(d.exists&&d.data().items)||[];render()},()=>{masters=[];render()});
   db.doc("repContacts/all").onSnapshot(d=>{repContacts=(d.exists&&d.data())||{};mergeReps();render()},()=>{repContacts={};mergeReps();render()});sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});// Members are readable by editors only: a refused read hides the tab instead of flagging a broken connection
