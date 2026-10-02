@@ -365,7 +365,7 @@ const DEFAULT_RANKS={
  "Μέγας Διδάσκαλος":3,
  "Αναπληρωτής Μέγας Διδάσκαλος":2,"Βοηθός Μέγας Διδάσκαλος":2,"Επαρχιακός Μέγας Διδάσκαλος":2,"Περιφερειακός Μέγας Διδάσκαλος":2,
  "Πρώτος Μέγας Επόπτης":2,"Δεύτερος Μέγας Επόπτης":2,
- "Μέγας Καγκελάριος":1,"Αναπληρωτής Μέγας Καγκελάριος":1,"Μέγας Γραμματέας":1,"Αναπληρωτής Μέγας Γραμματέας":1,"Μέγας Ιερέας":1,
+ "Μέγας Καγκελάριος":1,"Αναπληρωτής Μέγας Καγκελάριος":1,"Μέγας Γραμματέας":1,"Αναπληρωτής Μέγας Γραμματέας":1,"Μέγας Ευχέτης":1,
  "Μέγας Τελετάρχης":1,"Μέγας Επόπτης Έργων":1,"Μέγας Ξιφοφόρος":1,"Μέγας Επιθεωρητής":1,
  "Πρόεδρος Συμβουλίου Μεγάλης Φιλανθρωπίας":1,"Πρόεδρος Μεγάλης Φιλανθρωπίας":1
 };
@@ -795,6 +795,13 @@ async function applySeedUpdates(done){
         if(ch.location&&(!v.location||v.location===l.location))nv.location=ch.location;
         if(ch.province&&(!v.province||v.province===l.province))nv.province=ch.province;
         if(nv.lodge!==v.lodge||nv.location!==v.location||nv.province!==v.province)good=await save("visits",v.id,nv,true)&&good}}
+    // officeRenames rewrite rep offices (incl. «Πρώην …») and carry any rank override to the new name
+    for(const [from,to] of Object.entries(u.officeRenames||{})){
+      for(const r of reps.filter(r=>(r.office||"").includes(from)))good=await save("reps",r.id,{...strip(r),office:r.office.split(from).join(to)},true)&&good;
+      if(from in rankMap){const next={...rankMap,[to]:rankMap[from]};delete next[from];
+        if(db){try{await db.doc("settings/rankmap").set({map:next})}catch(e){good=false}}
+        rankMap=next}
+    }
     for(const v of u.visits||[])if(!visits.some(x=>x.id===v.id||(String(x.number)===v.number&&x.date===v.date)))good=await save("visits",v.id,strip(v),true)&&good;
     if(good)ok.push(u.id);
   }

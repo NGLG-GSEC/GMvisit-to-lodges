@@ -732,6 +732,12 @@ window.SEED={
      "location": "Σύρος"
     }
    }
+  },
+  {
+   "id": "2026-10-megas-efchetis",
+   "officeRenames": {
+    "Μέγας Ιερέας": "Μέγας Ευχέτης"
+   }
   }
  ]
 };
