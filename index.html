@@ -114,6 +114,7 @@ td .num{font-variant-numeric:tabular-nums}
 }
 @media (prefers-reduced-motion:no-preference){.visit{transition:border-color .15s}}
 .combo{position:relative}
+.combo-filter{flex:1 1 220px;min-width:0}
 .combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;max-height:280px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(10,14,28,.18)}
 .combo-opt{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--line)}
 .combo-opt:last-child{border-bottom:0}
@@ -148,7 +149,8 @@ td .num{font-variant-numeric:tabular-nums}
     <div class="toolbar">
       <input class="grow" id="q" type="search" placeholder="Αναζήτηση στοάς, αριθμού, τόπου…">
       <select id="fProv"><option value="">Όλες οι Επαρχίες</option></select>
-      <select id="fRep"><option value="">Όλοι οι εκπρόσωποι</option><option value="__none">Χωρίς εκπρόσωπο</option></select>
+      <div class="combo combo-filter"><input id="fRepQ" type="search" placeholder="Όλοι οι εκπρόσωποι" aria-label="Φίλτρο εκπροσώπου" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="fRepList"><div class="combo-list" id="fRepList" role="listbox" hidden></div></div>
+      <input type="hidden" id="fRep" value="">
       <label class="chk"><input type="checkbox" id="fPast"> Παλαιότερες</label>
     </div>
     <div class="toolbar">
@@ -408,9 +410,8 @@ function renderFilters(){
   const locs=[...new Set([...lodges,...visits].map(x=>x.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
   const fp=$("fProv"),cur=fp.value;
   fp.innerHTML='<option value="">Όλες οι Επαρχίες</option>'+provs.map(p=>`<option>${esc(p)}</option>`).join("");fp.value=provs.includes(cur)?cur:"";
-  const fr=$("fRep"),curR=fr.value;
-  fr.innerHTML='<option value="">Όλοι οι εκπρόσωποι</option><option value="__none">Χωρίς εκπρόσωπο</option>'+sortedReps().map(r=>`<option value="${esc(r.id)}">${esc(repLabel(r))}</option>`).join("");
-  fr.value=[...fr.options].some(o=>o.value===curR)?curR:"";
+  const fr=$("fRep");if(fr.value&&fr.value!=="__none"&&!repById(fr.value))fr.value="";
+  if(document.activeElement!==$("fRepQ"))$("fRepQ").value=fRepLabel();
   $("lodgeList").innerHTML=sortedLodges().map(l=>`<option value="${esc(l.number)} · ${esc(l.name)}">${esc(l.province||"")}</option>`).join("");
   const lp=$("lp"),curL=lp.value;lp.innerHTML=provOptions("","Όλες οι Επαρχίες");lp.value=curL;
   $("locList").innerHTML=locs.map(p=>`<option value="${esc(p)}">`).join("");
@@ -547,7 +548,7 @@ function openVisit(v){
   $("visitTitle").textContent=v?"Επεξεργασία επίσκεψης":"Νέα επίσκεψη";
   $("vDate").value=v?.date||"";$("vNo").value=v?.number||"";$("vLodge").value=v?.lodge||"";
   $("vLoc").value=v?.location||"";$("vProv").value=v?.province||"";$("vNotes").value=v?.notes||"";
-  $("vRep").value=v?.repId&&repById(v.repId)?repOpt(repById(v.repId)):"";comboClose();
+  $("vRep").value=v?.repId&&repById(v.repId)?repOpt(repById(v.repId)):"";vCombo.close();
   const cur=v?.province||"",ps=sortedProvs();
   $("vProv").innerHTML='<option value="">— Χωρίς Επαρχία —</option>'+ps.map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("")+(cur&&!provByShort(cur)?`<option>${esc(cur)}</option>`:"");
   $("vProv").value=cur;updProvMail();
@@ -561,28 +562,48 @@ $("vLodge").addEventListener("change",()=>{const v=$("vLodge").value.trim();if(/
 $("vNo").addEventListener("change",()=>{const l=lodgeByNo($("vNo").value);if(l)fillFromLodge(l)});
 /* Rep search: instant, accent- and case-insensitive match on name, surname or office */
 const fold=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/ς/g,"σ");
-let comboIdx=-1,comboItems=[];
-function comboClose(){$("vRepList").hidden=true;$("vRep").setAttribute("aria-expanded","false");comboIdx=-1}
-function comboRender(){
-  const words=fold($("vRep").value).split(/\s+/).filter(Boolean),box=$("vRepList");
-  comboItems=sortedReps().filter(r=>{const h=fold(`${r.surname} ${r.name} ${r.office||""}`);return words.every(w=>h.includes(w))}).slice(0,60);
-  comboIdx=comboItems.length&&words.length?0:-1;
-  box.innerHTML=comboItems.length?comboItems.map((r,i)=>`<div class="combo-opt" role="option" id="vRepOpt${i}" data-i="${i}" aria-selected="${i===comboIdx}"><div class="who">${esc(r.surname)} ${esc(r.name)}</div><div class="meta">${esc(rankOf(r))}${r.office?` · ${esc(r.office)}`:""}${r.year?` (${esc(r.year)})`:""}</div></div>`).join(""):`<div class="combo-empty">Δεν βρέθηκε εκπρόσωπος.</div>`;
-  box.hidden=false;$("vRep").setAttribute("aria-expanded","true");
+const repMatches=words=>sortedReps().filter(r=>{const h=fold(`${r.surname} ${r.name} ${r.office||""}`);return words.every(w=>h.includes(w))});
+const repOptHtml=r=>`<div class="who">${esc(r.surname)} ${esc(r.name)}</div><div class="meta">${esc(rankOf(r))}${r.office?` · ${esc(r.office)}`:""}${r.year?` (${esc(r.year)})`:""}</div>`;
+// source(words) returns [{html, value}]; pick(item) applies the choice.
+function makeCombo(inp,box,source,pick){
+  let idx=-1,items=[];
+  const close=()=>{box.hidden=true;inp.setAttribute("aria-expanded","false");idx=-1};
+  const mark=()=>{box.querySelectorAll(".combo-opt").forEach((o,i)=>o.setAttribute("aria-selected",i===idx));const a=$(box.id+"-"+idx);if(a)a.scrollIntoView({block:"nearest"})};
+  const render=()=>{
+    const words=fold(inp.value).split(/\s+/).filter(Boolean);
+    items=source(words);idx=items.length&&words.length?0:-1;
+    box.innerHTML=items.length?items.map((it,i)=>`<div class="combo-opt" role="option" id="${box.id}-${i}" data-i="${i}" aria-selected="${i===idx}">${it.html}</div>`).join(""):`<div class="combo-empty">Δεν βρέθηκε εκπρόσωπος.</div>`;
+    box.hidden=false;inp.setAttribute("aria-expanded","true");
+  };
+  const choose=i=>{if(items[i]){pick(items[i]);close()}};
+  inp.addEventListener("input",render);
+  inp.addEventListener("keydown",e=>{
+    const open=!box.hidden;
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();if(!open){render();return}
+      if(items.length){idx=(idx+(e.key==="ArrowDown"?1:-1)+items.length)%items.length;mark()}}
+    else if(e.key==="Enter"&&open&&idx>=0){e.preventDefault();choose(idx)}
+    else if(e.key==="Escape"&&open){e.preventDefault();close()}
+  });
+  box.addEventListener("mousedown",e=>{const o=e.target.closest(".combo-opt");if(o){e.preventDefault();choose(Number(o.dataset.i))}});
+  inp.addEventListener("blur",()=>setTimeout(close,120));
+  return {render,close};
 }
-function comboMark(){$("vRepList").querySelectorAll(".combo-opt").forEach((o,i)=>o.setAttribute("aria-selected",i===comboIdx));const a=$("vRepOpt"+comboIdx);if(a)a.scrollIntoView({block:"nearest"})}
-function comboPick(i){const r=comboItems[i];if(!r)return;$("vRep").value=repOpt(r);comboClose()}
-$("vRep").addEventListener("input",comboRender);
-$("vRep").addEventListener("focus",()=>{if(!$("vRep").disabled&&!reps.some(r=>repOpt(r)===$("vRep").value.trim()))comboRender()});
-$("vRep").addEventListener("keydown",e=>{
-  const open=!$("vRepList").hidden;
-  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();if(!open){comboRender();return}
-    if(comboItems.length){comboIdx=(comboIdx+(e.key==="ArrowDown"?1:-1)+comboItems.length)%comboItems.length;comboMark()}}
-  else if(e.key==="Enter"&&open&&comboIdx>=0){e.preventDefault();comboPick(comboIdx)}
-  else if(e.key==="Escape"&&open){e.preventDefault();comboClose()}
-});
-$("vRepList").addEventListener("mousedown",e=>{const o=e.target.closest(".combo-opt");if(o){e.preventDefault();comboPick(Number(o.dataset.i))}});
-$("vRep").addEventListener("blur",()=>setTimeout(comboClose,120));
+// Visit form
+const vCombo=makeCombo($("vRep"),$("vRepList"),w=>repMatches(w).slice(0,60).map(r=>({html:repOptHtml(r),value:r})),it=>{$("vRep").value=repOpt(it.value)});
+$("vRep").addEventListener("focus",()=>{if(!$("vRep").disabled&&!reps.some(r=>repOpt(r)===$("vRep").value.trim()))vCombo.render()});
+// Calendar filter: "" = all, "__none" = without rep, otherwise a rep id
+const fRepCombo=makeCombo($("fRepQ"),$("fRepList"),w=>{
+  const special=[{value:"",html:'<div class="who">Όλοι οι εκπρόσωποι</div>'},{value:"__none",html:'<div class="who">Χωρίς εκπρόσωπο</div>'}]
+    .filter(o=>!w.length||w.every(x=>fold(o.html).includes(x)));
+  return [...special,...repMatches(w).slice(0,60).map(r=>({html:repOptHtml(r),value:r.id}))];
+},it=>setRepFilter(it.value));
+function fRepLabel(){const v=$("fRep").value;return v==="__none"?"Χωρίς εκπρόσωπο":v?repLabel(repById(v)):""}
+function setRepFilter(v){$("fRep").value=v;$("fRepQ").value=fRepLabel();renderVisits()}
+// Focus, or a click while the list is closed (e.g. right after a pick), opens the full list with the text selected
+const fRepOpen=()=>{if($("fRepList").hidden){$("fRepQ").select();fRepCombo.render()}};
+$("fRepQ").addEventListener("focus",fRepOpen);$("fRepQ").addEventListener("click",fRepOpen);
+$("fRepQ").addEventListener("input",()=>{if(!$("fRepQ").value&&$("fRep").value){$("fRep").value="";renderVisits()}});
+$("fRepQ").addEventListener("blur",()=>setTimeout(()=>{if(document.activeElement!==$("fRepQ"))$("fRepQ").value=fRepLabel()},150));
 function updProvMail(){const p=provByShort($("vProv").value);$("vProvMail").textContent=p?.email?`Γραμματεία (${p.title||""}): ${p.email}`:""}
 $("vProv").addEventListener("change",updProvMail);
 $("addVisit").onclick=()=>openVisit(null);
