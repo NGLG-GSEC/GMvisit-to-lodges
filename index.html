@@ -250,6 +250,7 @@ tr.past td{opacity:.6}
       <button type="button" role="tab" data-msub="all" aria-selected="true">Όλα τα μέλη</button>
       <button type="button" role="tab" data-msub="officers" aria-selected="false">Ενεργοί Αξιωματικοί</button>
       <button type="button" role="tab" data-msub="masters" aria-selected="false">Σεβάσμιοι Στοών</button>
+      <button type="button" role="tab" data-msub="namedays" aria-selected="false">Εορτολόγιο</button>
     </div>
     <div id="msub-all">
     <div class="toolbar">
@@ -282,6 +283,16 @@ tr.past td{opacity:.6}
       </div>
       <div class="stats" id="masterStats"></div>
       <div id="mastersBody"></div>
+    </div>
+    <div id="msub-namedays" hidden>
+      <div class="toolbar">
+        <label class="chk" for="ndFrom">Από</label><input type="date" id="ndFrom" style="width:auto">
+        <label class="chk" for="ndTo">Έως</label><input type="date" id="ndTo" style="width:auto">
+        <label class="chk"><input type="checkbox" id="ndMail"> Μόνο με email</label>
+        <button type="button" class="btn" id="xNamedays">Excel</button>
+      </div>
+      <div class="stats" id="ndStats"></div>
+      <div id="ndBody"></div>
     </div>
     <div class="err" id="xErr" hidden></div>
   </section>
@@ -584,7 +595,7 @@ $("tab-visits").onclick=()=>showTab("visits");$("tab-reps").onclick=()=>showTab(
 try{const t=localStorage.getItem("lvr-tab");if(["reps","provs","lodges","members","projects"].includes(t))showTab(t)}catch(e){}
 
 /* Rendering */
-function render(){renderFilters();renderVisits();renderReps();renderProvs();renderLodges();renderMembers();renderOfficers();renderMasters();renderProjects()}
+function render(){renderFilters();renderVisits();renderReps();renderProvs();renderLodges();renderMembers();renderOfficers();renderMasters();renderNamedays();renderProjects()}
 function renderFilters(){
   const provs=[...new Set([...sortedProvs().map(p=>p.short),...visits.map(v=>v.province).filter(Boolean)])];
   const locs=[...new Set([...lodges,...visits].map(x=>x.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
@@ -979,6 +990,56 @@ function renderMasters(){
 ["sq","sp","smiss"].forEach(id=>$(id).addEventListener("input",renderMasters));
 $("xMasters").onclick=()=>{const sp=$("sp").value;
   exportXlsx("sevasmioi",[["Σεβάσμιοι",["Αρ.","Στοά","Επαρχία","Επώνυμο","Όνομα","Κινητό","Email","Έτος"],masterRows().filter(r=>!sp||r.province===sp).map(r=>[r.lodge.number,r.lodge.name,r.province,r.m?.surname||"",r.m?.name||"",r.m?.mobile||"",r.m?.email||"",r.m?.year||""])]],$("xMasters"))};
+
+/* ---------- Εορτολόγιο: name days of active members (editors only) ---------- */
+let namedays=[],ndIndex=null;
+// Orthodox Easter (Gregorian date), valid 1900–2099
+function orthodoxEaster(y){const a=y%4,b=y%7,c=y%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7,mo=Math.floor((d+e+114)/31),da=((d+e+114)%31)+1;const t=new Date(y,mo-1,da);t.setDate(t.getDate()+13);return t}
+const isoOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+// Fixed day, or a day counted from Easter; St George / St Mark move after Easter when they fall before it
+function nameDayIn(it,y){
+  if(!it.md&&it.easter==null)return null;
+  const E=orthodoxEaster(y),plus=n=>{const d=new Date(E);d.setDate(d.getDate()+n);return d};
+  if(it.easter!=null)return isoOf(plus(it.easter));
+  const [m,dd]=it.md.split("-").map(Number);let d=new Date(y,m-1,dd);
+  if(it.rule==="george"&&d<E)d=plus(1);
+  if(it.rule==="mark"&&d<E)d=plus(2);
+  return isoOf(d);
+}
+const ndKey=s=>fold(String(s||"").split(/\s+/)[0]);
+const ndMap=()=>ndIndex||(ndIndex=new Map(namedays.map(it=>[ndKey(it.name),it])));
+const ndLabel=it=>it.official||it.name;
+// [{date, label, movable, members:[...]}] for active members whose first name has a name day in [from,to]
+function celebrants(from,to){
+  const groups=new Map(),y0=+from.slice(0,4),y1=+to.slice(0,4);
+  activeMembers().forEach(m=>{const it=ndMap().get(ndKey(m.f));if(!it)return;
+    for(let y=y0;y<=y1;y++){const d=nameDayIn(it,y);if(!d||d<from||d>to)continue;
+      const k=d+"|"+ndLabel(it);if(!groups.has(k))groups.set(k,{date:d,label:ndLabel(it),movable:it.easter!=null||!!it.rule,members:[]});groups.get(k).members.push(m)}});
+  return [...groups.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.label.localeCompare(b.label,"el"));
+}
+function ndDefaults(){if(!$("ndFrom").value)$("ndFrom").value=todayISO();if(!$("ndTo").value){const d=parseISO(todayISO());d.setDate(d.getDate()+30);$("ndTo").value=isoOf(d)}}
+function renderNamedays(){
+  const body=$("ndBody");if(!body)return;
+  if(!namedays.length){$("ndStats").innerHTML="";body.innerHTML=`<div class="empty">Δεν έχει φορτωθεί ακόμη το εορτολόγιο.</div>`;return}
+  ndDefaults();
+  const from=$("ndFrom").value,to=$("ndTo").value<from?from:$("ndTo").value,onlyMail=$("ndMail").checked;
+  const list=celebrants(from,to).map(g=>({...g,members:g.members.filter(m=>!onlyMail||(m.e||[]).length).sort((a,b)=>a.s.localeCompare(b.s,"el"))})).filter(g=>g.members.length);
+  const people=list.reduce((n,g)=>n+g.members.length,0),withMail=list.reduce((n,g)=>n+g.members.filter(m=>(m.e||[]).length).length,0);
+  const noDate=activeMembers().filter(m=>{const it=ndMap().get(ndKey(m.f));return !it||(!it.md&&it.easter==null)});
+  $("ndStats").innerHTML=`<span><b>${people}</b> εορτάζοντες</span><span><b>${new Set(list.map(g=>g.date)).size}</b> ημέρες</span><span><b>${withMail}</b> με email</span><span class="${noDate.length?"warn":""}"><b>${noDate.length}</b> μέλη χωρίς ημερομηνία εορτής</span>`;
+  const byDate=new Map();list.forEach(g=>{if(!byDate.has(g.date))byDate.set(g.date,[]);byDate.get(g.date).push(g)});
+  body.innerHTML=(list.length?[...byDate].map(([d,gs])=>`<section class="month"><h2>${esc(dayStr(d))}${d===todayISO()?' <small>Σήμερα</small>':""}</h2>${gs.map(g=>`<div class="psec" style="margin-top:8px"><h3 style="font-size:18px">${esc(g.label)} <small class="meta">${g.members.length} ${g.members.length===1?"μέλος":"μέλη"}${g.movable?" · κινητή εορτή":""}</small></h3>
+      <div class="tablewrap"><table><thead><tr><th>Ονοματεπώνυμο</th><th>Στοές</th><th>Κινητό</th><th>Email</th></tr></thead><tbody>${g.members.map(m=>`<tr><td><b>${esc(m.s)}</b> ${esc(m.f)}</td><td class="meta">${esc(memberLodges(m))}</td><td style="white-space:nowrap">${(m.m||[])[0]?`<a href="tel:${esc(m.m[0])}">${esc(m.m[0])}</a>`:'<span class="meta">—</span>'}</td><td>${(m.e||[])[0]?esc(m.e[0]):'<span class="meta">—</span>'}</td></tr>`).join("")}</tbody></table></div></div>`).join("")}</section>`).join("")
+    :`<div class="empty">Κανένα μέλος δεν γιορτάζει σε αυτό το διάστημα.</div>`)+
+    (noDate.length?`<details style="margin-top:18px"><summary class="hint" style="cursor:pointer">Μέλη χωρίς ημερομηνία εορτής (${noDate.length}) — ονόματα που δεν αντιστοιχίστηκαν στο εορτολόγιο</summary><p class="meta" style="margin-top:8px">${[...new Set(noDate.map(m=>(m.f||"").split(/\s+/)[0]))].sort((a,b)=>a.localeCompare(b,"el")).map(esc).join(" · ")}</p></details>`:"");
+}
+["ndFrom","ndTo","ndMail"].forEach(id=>$(id).addEventListener("input",renderNamedays));
+$("xNamedays").onclick=()=>{
+  ndDefaults();const from=$("ndFrom").value,to=$("ndTo").value<from?from:$("ndTo").value,rows=[];
+  celebrants(from,to).forEach(g=>g.members.filter(m=>!$("ndMail").checked||(m.e||[]).length).sort((a,b)=>a.s.localeCompare(b.s,"el")).forEach(m=>rows.push([fmtDate(g.date),DAYS[parseISO(g.date).getDay()],g.label,m.s,m.f,memberLodges(m),(m.e||[])[0]||"",(m.m||[])[0]||""])));
+  if(!rows.length){showErr("xErr","Κανένα μέλος δεν γιορτάζει σε αυτό το διάστημα.");return}
+  exportXlsx(`eortazontes-${from}-${to}`,[["Εορτάζοντες",["Ημερομηνία","Ημέρα","Εορτή","Επώνυμο","Όνομα","Στοές","Email","Κινητό"],rows]],$("xNamedays"));
+};
 
 /* ---------- Πρότζεκτ ΜΔ: new lodge, new body, other projects (editors only) ---------- */
 let projects=[],projOpen=null,projDirty=false,projTimer=0,projSaving=Promise.resolve(),assetsNs;
@@ -1695,12 +1756,12 @@ function newId(p){return p+Date.now().toString(36)+Math.random().toString(36).sl
 function strip(o){const {id,...r}=o;return r}
 function showErr(id,msg){$(id).textContent=msg;$(id).hidden=false}
 const LKEY="lvr-data-v1";
-function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters,projects}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
+function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters,projects,namedays}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
 function loadLocal(){
   let d=null;try{d=JSON.parse(localStorage.getItem(LKEY)||"null")}catch(e){}
   const seed=window.SEED||{};
   visits=d?.visits||seed.visits||[];reps=d?.reps||seed.reps||[];provinces=d?.provinces||seed.provinces||[];
-  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];members=d?.members||[];officers=d?.officers||[];masters=d?.masters||[];projects=d?.projects||[];
+  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];members=d?.members||[];officers=d?.officers||[];masters=d?.masters||[];projects=d?.projects||[];namedays=d?.namedays||[];ndIndex=null;
   if(!d)persistLocal();
 }
 // Merges SEED.updates not yet applied: new lodges, lodge locations (only where empty), lodgeChanges
@@ -1772,14 +1833,14 @@ render();
     const n=$("storeNotice");n.textContent="Τα δεδομένα αποθηκεύονται μόνο σε αυτόν τον browser. Κρατάτε τακτικά αντίγραφο με την «Εξαγωγή».";n.hidden=false;
     $("backupBar").hidden=false;
     $("exportBtn").onclick=()=>{
-      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters,projects},null,2)],{type:"application/json"});
+      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members,officers,masters,projects,namedays},null,2)],{type:"application/json"});
       const d=new Date(),stamp=String(d.getDate()).padStart(2,"0")+String(d.getMonth()+1).padStart(2,"0")+String(d.getFullYear()).slice(2);
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`lodge-visits-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();
     };
     $("importFile").onchange=async e=>{
       const f=e.target.files[0];if(!f)return;
       try{const d=JSON.parse(await f.text());if(!Array.isArray(d.visits)||!Array.isArray(d.lodges))throw 0;
-        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};seedApplied=d.seedApplied||[];members=d.members||[];officers=d.officers||[];masters=d.masters||[];projects=d.projects||[];persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
+        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};seedApplied=d.seedApplied||[];members=d.members||[];officers=d.officers||[];masters=d.masters||[];projects=d.projects||[];namedays=d.namedays||[];ndIndex=null;persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
       catch(err){toast("Το αρχείο δεν είναι έγκυρο αντίγραφο")}
       e.target.value="";
     };
@@ -1795,6 +1856,7 @@ render();
   // Rep contacts are readable by editors only; viewers simply get none
   // Projects are editors-only: a refused read hides the tab
   db.collection("projects").onSnapshot(s=>{projects=s.docs.map(d=>({id:d.id,...d.data()}));renderProjects()},()=>{projects=[];$("tab-projects").hidden=true;if(!$("view-projects").hidden)showTab("visits")});
+  db.doc("namedays/all").onSnapshot(d=>{namedays=(d.exists&&d.data().items)||[];ndIndex=null;render()},()=>{namedays=[];ndIndex=null;render()});
   db.doc("officers/all").onSnapshot(d=>{const x=(d.exists&&d.data())||{};officers=x.items||[];officerHonors=x.honors||[];render()},()=>{officers=[];officerHonors=[];render()});
   db.doc("masters/all").onSnapshot(d=>{masters=(d.exists&&d.data().items)||[];render()},()=>{masters=[];render()});
   db.doc("repContacts/all").onSnapshot(d=>{repContacts=(d.exists&&d.data())||{};mergeReps();render()},()=>{repContacts={};mergeReps();render()});sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});// Members are readable by editors only: a refused read hides the tab instead of flagging a broken connection
