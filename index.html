@@ -234,6 +234,7 @@ tr.past td{opacity:.6}
     <div id="msub-officers" hidden>
       <div class="toolbar">
         <input class="grow" id="oq" type="search" placeholder="Αναζήτηση αξιώματος ή ονόματος…" autocomplete="off">
+        <select id="of" aria-label="Ομάδα"><option value="active">Εν ενεργεία</option><option value="all">Όλοι οι Μεγάλοι Αξιωματικοί</option><option value="past">Πρώην</option><option value="dec">Μεταστάντες</option><option value="honors">Τιμητικές διακρίσεις (ξένοι)</option></select>
         <button type="button" class="btn" id="xOfficers">Excel</button>
       </div>
       <div class="stats" id="officerStats"></div>
@@ -820,21 +821,33 @@ $("xNames").onclick=()=>{
     ["Ονόματα",["Όνομα","Μέλη","Με email","Με κινητό","Ημερομηνία εορτής"],names],
     ["Μέλη ανά όνομα",["Όνομα","Επώνυμο","Email","Κινητό","Στοές","Κωδ. μέλους"],people]],$("xNames"));
 };
+let officerHonors=[];
+const offList=()=>{const f=$("of").value;return officers.filter(o=>f==="all"||(f==="active"?o.active:f==="dec"?!!o.deceased:!o.active&&!o.deceased)).map(withContact)};
+const offTitle=o=>o.active?o.office:(o.title||o.rank||"");
 function renderOfficers(){
   const body=$("officersBody");if(!body)return;
-  if(!officers.length){$("officerStats").innerHTML="";body.innerHTML=`<div class="empty">Δεν έχουν φορτωθεί ακόμη οι ενεργοί Αξιωματικοί.<br>Στείλτε τη λίστα (αξίωμα, ονοματεπώνυμο και, αν υπάρχουν, Στοά, email, κινητό) για να φορτωθεί.</div>`;return}
-  const w=fold($("oq").value).split(/\s+/).filter(Boolean);
-  const list=officers.map(withContact).filter(o=>!w.length||w.every(x=>fold(`${o.office} ${o.surname} ${o.name} ${o.lodge||""} ${o.province||""}`).includes(x)));
-  $("officerStats").innerHTML=`<span><b>${list.length}</b> από ${officers.length} Αξιωματικοί</span><span><b>${officers.map(withContact).filter(o=>o.email).length}</b> με email</span>`;
-  body.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Αξίωμα</th><th>Ονοματεπώνυμο</th><th>Στοά · Επαρχία</th><th>Email</th><th>Κινητό</th></tr></thead><tbody>${list.map(o=>`<tr>
-    <td><b>${esc(o.office||"")}</b>${o.year?`<div class="meta">${esc(o.year)}</div>`:""}</td><td>${esc(o.surname||"")} ${esc(o.name||"")}</td>
-    <td>${esc([o.lodge,o.number?`Αρ. ${o.number}`:""].filter(Boolean).join(" "))||"—"}${o.province?`<div class="meta">${esc(o.province)}</div>`:""}</td>
+  if(!officers.length&&!officerHonors.length){$("officerStats").innerHTML="";body.innerHTML=`<div class="empty">Δεν έχουν φορτωθεί ακόμη οι Αξιωματικοί.</div>`;return}
+  const w=fold($("oq").value).split(/\s+/).filter(Boolean),f=$("of").value,hit=t=>!w.length||w.every(x=>fold(t).includes(x));
+  if(f==="honors"){
+    const list=officerHonors.filter(h=>hit(`${h.name} ${h.office} ${h.honor} ${h.grandLodge}`));
+    $("officerStats").innerHTML=`<span><b>${list.length}</b> από ${officerHonors.length} τιμητικές διακρίσεις</span>`;
+    body.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Ονοματεπώνυμο</th><th>Διάκριση</th><th>Μεγάλη Στοά</th><th>Ημερομηνία</th></tr></thead><tbody>${list.map(h=>`<tr><td><b>${esc(h.name)}</b>${h.title?`<div class="meta">${esc(h.title)}</div>`:""}</td><td>${esc([h.honor,h.office].filter(Boolean).join(" · "))}</td><td>${esc(h.grandLodge)}</td><td class="num">${esc(h.date)}</td></tr>`).join("")}</tbody></table></div>`;return}
+  const list=offList().filter(o=>hit(`${offTitle(o)} ${o.rank} ${o.surname} ${o.name}`)).sort((x,y)=>x.surname.localeCompare(y.surname,"el"));
+  $("officerStats").innerHTML=`<span><b>${list.length}</b> Αξιωματικοί</span><span><b>${officers.filter(o=>o.active).length}</b> εν ενεργεία</span><span><b>${list.filter(o=>o.email).length}</b> με email</span><span><b>${list.filter(o=>o.mobile).length}</b> με κινητό</span>`;
+  body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αξίωμα</th><th>Ονοματεπώνυμο</th><th>Βαθμός · Διάταγμα</th><th>Email</th><th>Κινητό</th></tr></thead><tbody>${list.map(o=>`<tr${o.deceased?' class="past"':""}>
+    <td><b>${esc(offTitle(o))}</b>${o.active&&o.officeDecree?`<div class="meta">Διάταγμα ${esc(o.officeDecree)}</div>`:""}${o.deceased?`<div class="meta">${esc(o.deceased)}</div>`:""}</td>
+    <td>${esc(o.surname)} ${esc(o.name)}${o.notes?`<div class="meta">${esc(o.notes)}</div>`:""}</td>
+    <td class="meta">${esc(o.rank||"")}${o.decree||o.year?`<div>${esc([o.decree&&o.decree!=="?"?`Δ. ${o.decree}`:"",o.year].filter(Boolean).join(" · "))}</div>`:""}${(o.changes||[]).map(c=>`<div>${esc(c)}</div>`).join("")}</td>
     <td>${o.email?`<a href="mailto:${esc(o.email)}">${esc(o.email)}</a>`:'<span class="meta">—</span>'}${o.fromMembers?' <span class="from-m">(από Μέλη)</span>':""}</td>
-    <td style="white-space:nowrap">${o.mobile?`<a href="tel:${esc(o.mobile)}">${esc(o.mobile)}</a>`:'<span class="meta">—</span>'}</td></tr>`).join("")}</tbody></table></div>`;
+    <td style="white-space:nowrap">${o.mobile?`<a href="tel:${esc(o.mobile)}">${esc(o.mobile)}</a>`:'<span class="meta">—</span>'}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Κανένας Αξιωματικός δεν ταιριάζει με την αναζήτηση.</div>`;
 }
-$("oq").addEventListener("input",renderOfficers);
-$("xOfficers").onclick=()=>{if(!officers.length){showErr("xErr","Δεν υπάρχουν ακόμη Αξιωματικοί για εξαγωγή.");return}
-  exportXlsx("axiomatikoi",[["Αξιωματικοί",["Αξίωμα","Επώνυμο","Όνομα","Στοά","Αρ.","Επαρχία","Email","Κινητό"],officers.map(withContact).map(o=>[o.office||"",o.surname||"",o.name||"",o.lodge||"",o.number||"",o.province||"",o.email||"",o.mobile||""])]],$("xOfficers"))};
+["oq","of"].forEach(id=>$(id).addEventListener("input",renderOfficers));
+$("xOfficers").onclick=()=>{
+  const f=$("of").value;
+  if(f==="honors"){exportXlsx("timitikes-diakriseis",[["Τιμητικές διακρίσεις",["Ονοματεπώνυμο","Προσφώνηση","Διάκριση","Αξίωμα","Μεγάλη Στοά","Ημερομηνία"],officerHonors.map(h=>[h.name,h.title,h.honor,h.office,h.grandLodge,h.date])]],$("xOfficers"));return}
+  const list=offList();if(!list.length){showErr("xErr","Δεν υπάρχουν Αξιωματικοί για εξαγωγή.");return}
+  exportXlsx(f==="active"?"energoi-axiomatikoi":"megaloi-axiomatikoi",[["Αξιωματικοί",["Αξίωμα","Επώνυμο","Όνομα","Βαθμός","Διάταγμα","Έτος","Email","Κινητό","Παρατηρήσεις"],list.map(o=>[offTitle(o),o.surname,o.name,o.rank||"",o.active?o.officeDecree:o.decree,o.year||"",o.email||"",o.mobile||"",[o.deceased,o.notes,...(o.changes||[])].filter(Boolean).join(" · ")])]],$("xOfficers"));
+};
 // Lodge masters: one row per lodge of the registry, with the active Worshipful Master when known
 function masterRows(){
   const byNo=new Map(masters.map(m=>[String(m.number),m]));
@@ -1294,7 +1307,7 @@ render();
     if(added.length){try{await db.doc("settings/seed").set({applied:[...seedApplied,...added]})}catch(e){}}})}};
   sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>{repsRaw=a;mergeReps()});
   // Rep contacts are readable by editors only; viewers simply get none
-  db.doc("officers/all").onSnapshot(d=>{officers=(d.exists&&d.data().items)||[];render()},()=>{officers=[];render()});
+  db.doc("officers/all").onSnapshot(d=>{const x=(d.exists&&d.data())||{};officers=x.items||[];officerHonors=x.honors||[];render()},()=>{officers=[];officerHonors=[];render()});
   db.doc("masters/all").onSnapshot(d=>{masters=(d.exists&&d.data().items)||[];render()},()=>{masters=[];render()});
   db.doc("repContacts/all").onSnapshot(d=>{repContacts=(d.exists&&d.data())||{};mergeReps();render()},()=>{repContacts={};mergeReps();render()});sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});// Members are readable by editors only: a refused read hides the tab instead of flagging a broken connection
   db.collection("members").onSnapshot(s=>{membersDenied=false;members=s.docs.map(d=>d.data()).sort((x,y)=>(x.n??0)-(y.n??0)).flatMap(d=>d.items||[]);render()},
