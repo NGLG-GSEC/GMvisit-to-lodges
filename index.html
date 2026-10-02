@@ -292,8 +292,7 @@ tr.past td{opacity:.6}
         <button type="button" class="btn" id="xNamedays">Excel</button>
       </div>
       <div class="toolbar" id="ndSelBar">
-        <button type="button" class="btn ghost sm" id="ndAll">Επιλογή όλων</button>
-        <button type="button" class="btn ghost sm" id="ndNone">Καμία</button>
+        <label class="chk" style="color:var(--ink);font-weight:600"><input type="checkbox" id="ndAll"> <span id="ndAllLbl">Επιλογή όλων</span></label>
         <label class="chk"><input type="checkbox" id="ndHideSent"> Απόκρυψη όσων έλαβαν ευχές</label>
         <button type="button" class="btn primary sm" id="ndGreet">Αποστολή ευχών</button>
       </div>
@@ -1021,7 +1020,7 @@ $("xMasters").onclick=()=>{const sp=$("sp").value;
   exportXlsx("sevasmioi",[["Σεβάσμιοι",["Αρ.","Στοά","Επαρχία","Επώνυμο","Όνομα","Κινητό","Email","Έτος"],masterRows().filter(r=>!sp||r.province===sp).map(r=>[r.lodge.number,r.lodge.name,r.province,r.m?.surname||"",r.m?.name||"",r.m?.mobile||"",r.m?.email||"",r.m?.year||""])]],$("xMasters"))};
 
 /* ---------- Εορτολόγιο: name days of active members (editors only) ---------- */
-let namedays=[],ndIndex=null,ndSel=new Set(),ndSeen=new Set(),greetLog=(()=>{try{return JSON.parse(localStorage.getItem("lvr-greet")||"{}")}catch(e){return {}}})();
+let namedays=[],ndIndex=null,ndSel=new Set(),greetLog=(()=>{try{return JSON.parse(localStorage.getItem("lvr-greet")||"{}")}catch(e){return {}}})();
 // Orthodox Easter (Gregorian date), valid 1900–2099
 function orthodoxEaster(y){const a=y%4,b=y%7,c=y%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7,mo=Math.floor((d+e+114)/31),da=((d+e+114)%31)+1;const t=new Date(y,mo-1,da);t.setDate(t.getDate()+13);return t}
 const isoOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -1055,18 +1054,18 @@ function renderNamedays(){
   const hideSent=$("ndHideSent").checked;
   const list=celebrants(from,to).map(g=>({...g,members:g.members.filter(m=>(!onlyMail||(m.e||[]).length)&&!(hideSent&&greetLog[greetKey(m,g.date)])).sort((a,b)=>a.s.localeCompare(b.s,"el"))})).filter(g=>g.members.length);
   ndVisible=[];list.forEach(g=>g.members.forEach(m=>{if(!greetMail(m))return;const k=greetKey(m,g.date);ndVisible.push({k,m,date:g.date,label:g.label});
-    if(!ndSeen.has(k)){ndSeen.add(k);if(!greetLog[k])ndSel.add(k)}}));
+}));
   const people=list.reduce((n,g)=>n+g.members.length,0),withMail=list.reduce((n,g)=>n+g.members.filter(m=>(m.e||[]).length).length,0);
-  const noDate=activeMembers().filter(m=>{const it=ndMap().get(ndKey(m.f));return !it||(!it.md&&it.easter==null)});
-  $("ndStats").innerHTML=`<span><b>${people}</b> εορτάζοντες</span><span><b>${new Set(list.map(g=>g.date)).size}</b> ημέρες</span><span><b>${withMail}</b> με email</span><span class="${noDate.length?"warn":""}"><b>${noDate.length}</b> μέλη χωρίς ημερομηνία εορτής</span>`;
+  $("ndStats").innerHTML=`<span><b>${people}</b> εορτάζοντες</span><span><b>${new Set(list.map(g=>g.date)).size}</b> ημέρες</span><span><b>${withMail}</b> με email</span><span><b>${list.length}</b> εορτές</span>`;
   const byDate=new Map();list.forEach(g=>{if(!byDate.has(g.date))byDate.set(g.date,[]);byDate.get(g.date).push(g)});
   body.innerHTML=(list.length?[...byDate].map(([d,gs])=>`<section class="month"><h2>${esc(dayStr(d))}${d===todayISO()?' <small>Σήμερα</small>':""}</h2>${gs.map(g=>`<div class="psec" style="margin-top:8px"><h3 style="font-size:18px">${esc(g.label)} <small class="meta">${g.members.length} ${g.members.length===1?"μέλος":"μέλη"}${g.movable?" · κινητή εορτή":""}</small></h3>
       <div class="tablewrap"><table><thead><tr><th style="width:28px">${g.members.some(greetMail)?`<input type="checkbox" data-ndg="${esc(g.date+"|"+g.label)}" aria-label="Επιλογή όλων: ${esc(g.label)}" ${g.members.filter(greetMail).every(m=>ndSel.has(greetKey(m,g.date)))?"checked":""}>`:""}</th><th>Ονοματεπώνυμο</th><th>Στοές</th><th>Κινητό</th><th>Email</th></tr></thead><tbody>${g.members.map(m=>{const k=greetKey(m,g.date),sent=greetLog[k];return `<tr><td>${greetMail(m)?`<input type="checkbox" data-ndk="${esc(k)}" aria-label="Επιλογή ${esc(m.s+" "+m.f)}" ${ndSel.has(k)?"checked":""}>`:""}</td><td><b>${esc(m.s)}</b> ${esc(m.f)}${sent?` <span class="okpill" title="Στάλθηκαν ευχές ${esc(fmtDate(sent))}">✓ Ευχές</span>`:""}</td><td class="meta">${esc(memberLodges(m))}</td><td style="white-space:nowrap">${(m.m||[])[0]?`<a href="tel:${esc(m.m[0])}">${esc(m.m[0])}</a>`:'<span class="meta">—</span>'}</td><td>${(m.e||[])[0]?esc(m.e[0]):'<span class="meta">—</span>'}</td></tr>`}).join("")}</tbody></table></div></div>`).join("")}</section>`).join("")
     :`<div class="empty">Κανένα μέλος δεν γιορτάζει σε αυτό το διάστημα.</div>`)+
-    (noDate.length?`<details style="margin-top:18px"><summary class="hint" style="cursor:pointer">Μέλη χωρίς ημερομηνία εορτής (${noDate.length}) — ονόματα που δεν αντιστοιχίστηκαν στο εορτολόγιο</summary><p class="meta" style="margin-top:8px">${[...new Set(noDate.map(m=>(m.f||"").split(/\s+/)[0]))].sort((a,b)=>a.localeCompare(b,"el")).map(esc).join(" · ")}</p></details>`:"");
+    "";
   body.querySelectorAll("[data-ndk]").forEach(c=>c.onchange=()=>{c.checked?ndSel.add(c.dataset.ndk):ndSel.delete(c.dataset.ndk);renderNamedays()});
   body.querySelectorAll("[data-ndg]").forEach(c=>c.onchange=()=>{ndVisible.filter(v=>v.date+"|"+v.label===c.dataset.ndg).forEach(v=>c.checked?ndSel.add(v.k):ndSel.delete(v.k));renderNamedays()});
-  const n=ndPicked().length;$("ndGreet").textContent=`Αποστολή ευχών (${n})`;$("ndGreet").disabled=!n;
+  const n=ndPicked().length,all=!!ndVisible.length&&n===ndVisible.length;$("ndGreet").textContent=`Αποστολή ευχών (${n})`;$("ndGreet").disabled=!n;
+  $("ndAll").checked=all;$("ndAll").indeterminate=n>0&&!all;$("ndAll").disabled=!ndVisible.length;$("ndAllLbl").textContent=all?"Αποεπιλογή όλων":`Επιλογή όλων (${ndVisible.length})`;
   $("ndSelBar").hidden=!ndVisible.length&&!hideSent;
 }
 let ndVisible=[];
@@ -1075,8 +1074,7 @@ const greetKey=(m,date)=>`${m.id}_${date}`;
 const greetMail=m=>(m.e||[]).find(x=>EMAIL_RE.test(x))||"";
 const ndPicked=()=>ndVisible.filter(v=>ndSel.has(v.k));
 ["ndFrom","ndTo","ndMail","ndHideSent"].forEach(id=>$(id).addEventListener("input",renderNamedays));
-$("ndAll").onclick=()=>{ndVisible.forEach(v=>ndSel.add(v.k));renderNamedays()};
-$("ndNone").onclick=()=>{ndVisible.forEach(v=>ndSel.delete(v.k));renderNamedays()};
+$("ndAll").onchange=()=>{const on=$("ndAll").checked;ndVisible.forEach(v=>on?ndSel.add(v.k):ndSel.delete(v.k));renderNamedays()};
 $("ndGreet").onclick=()=>openGreet(ndPicked());
 $("xNamedays").onclick=()=>{
   ndDefaults();const from=$("ndFrom").value,to=$("ndTo").value<from?from:$("ndTo").value,rows=[];
