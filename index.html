@@ -123,6 +123,9 @@ td .num{font-variant-numeric:tabular-nums}
 }
 @media (prefers-reduced-motion:no-preference){.visit{transition:border-color .15s}}
 #ovNote{z-index:12}
+tr.past td{opacity:.6}
+#membersBody a{color:var(--lapis);text-decoration:none}
+#membersBody a:hover{text-decoration:underline}
 .subhead{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
 .reprow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
 .reprow:last-child{border-bottom:0}
@@ -147,6 +150,7 @@ td .num{font-variant-numeric:tabular-nums}
       <button role="tab" id="tab-reps" aria-selected="false">Εκπρόσωποι</button>
       <button role="tab" id="tab-lodges" aria-selected="false">Στοές</button>
       <button role="tab" id="tab-provs" aria-selected="false">Επαρχίες</button>
+      <button role="tab" id="tab-members" aria-selected="false">Μέλη</button>
     </div>
   </header>
 
@@ -202,6 +206,16 @@ td .num{font-variant-numeric:tabular-nums}
     <div id="lodgesBody"></div>
   </section>
 
+  <section id="view-members" hidden>
+    <div class="toolbar" style="margin-top:20px">
+      <input class="grow" id="mq" type="search" placeholder="Αναζήτηση ονόματος, Στοάς, email ή κινητού…" autocomplete="off">
+      <select id="ms" aria-label="Κατάσταση"><option value="">Όλα τα μέλη</option><option value="active">Ενεργά</option><option value="x">Διαγραμμένα</option><option value="noemail">Χωρίς email</option><option value="rep">Εκπρόσωποι</option></select>
+      <select id="mlod" aria-label="Στοά"><option value="">Όλες οι Στοές</option></select>
+    </div>
+    <div class="stats" id="memberStats"></div>
+    <div id="membersBody"></div>
+  </section>
+
   <section id="view-provs" hidden>
     <div class="toolbar" style="margin-top:20px">
       <button class="btn primary" id="addProv">Νέα Επαρχία</button>
@@ -245,7 +259,9 @@ td .num{font-variant-numeric:tabular-nums}
       <div class="field"><label for="rRank">Βαθμός</label><select id="rRank"></select></div>
       <div class="field full"><label for="rOffice">Αξίωμα</label><input id="rOffice" placeholder="π.χ. Μέγας Καγκελάριος"></div>
       <div class="field"><label for="rYear">Έτος</label><input id="rYear" inputmode="numeric" placeholder="π.χ. 2024"></div>
+      <div class="field full"><button type="button" class="btn ghost sm" id="rFind">Συμπλήρωση από «Μέλη»</button><div id="rFindList" class="list" style="margin-top:6px"></div></div>
       <div class="field full"><label for="rEmail">Email</label><input id="rEmail" type="email" inputmode="email" autocomplete="off" placeholder="για την «Ενημέρωση Εκπροσώπου»"></div>
+      <div class="field full"><label for="rMobile">Κινητό</label><input id="rMobile" type="tel" inputmode="tel" autocomplete="off"></div>
     </div>
     <div class="err" id="rErr" hidden></div>
     <div class="actions">
@@ -399,7 +415,7 @@ td .num{font-variant-numeric:tabular-nums}
 const MONTHS=["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
 const DAYS=["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"];
 const $=id=>document.getElementById(id);
-let lodges=[], editingLodge=null, visits=[], reps=[], provinces=[], db=null, canWrite=true, editingVisit=null, editingRep=null, editingProv=null, importMode=null, confirmFn=null;
+let members=[], lodges=[], editingLodge=null, visits=[], reps=[], provinces=[], db=null, canWrite=true, editingVisit=null, editingRep=null, editingProv=null, importMode=null, confirmFn=null;
 const provByShort=s=>provinces.find(p=>p.short===s);
 const lodgeByNo=n=>lodges.find(l=>String(l.number)===String(n).trim());
 const lodgeSortKey=l=>{const n=parseInt(l.number,10);return isNaN(n)?100000:n};
@@ -445,14 +461,14 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.defaultPrevented
 
 /* Tabs */
 function showTab(which){
-  ["visits","reps","lodges","provs"].forEach(t=>{$("tab-"+t).setAttribute("aria-selected",t===which);$("view-"+t).hidden=t!==which});
+  ["visits","reps","lodges","provs","members"].forEach(t=>{$("tab-"+t).setAttribute("aria-selected",t===which);$("view-"+t).hidden=t!==which});
   try{localStorage.setItem("lvr-tab",which)}catch(e){}
 }
-$("tab-visits").onclick=()=>showTab("visits");$("tab-reps").onclick=()=>showTab("reps");$("tab-provs").onclick=()=>showTab("provs");$("tab-lodges").onclick=()=>showTab("lodges");
-try{const t=localStorage.getItem("lvr-tab");if(["reps","provs","lodges"].includes(t))showTab(t)}catch(e){}
+$("tab-visits").onclick=()=>showTab("visits");$("tab-reps").onclick=()=>showTab("reps");$("tab-provs").onclick=()=>showTab("provs");$("tab-lodges").onclick=()=>showTab("lodges");$("tab-members").onclick=()=>showTab("members");
+try{const t=localStorage.getItem("lvr-tab");if(["reps","provs","lodges","members"].includes(t))showTab(t)}catch(e){}
 
 /* Rendering */
-function render(){renderFilters();renderVisits();renderReps();renderProvs();renderLodges()}
+function render(){renderFilters();renderVisits();renderReps();renderProvs();renderLodges();renderMembers()}
 function renderFilters(){
   const provs=[...new Set([...sortedProvs().map(p=>p.short),...visits.map(v=>v.province).filter(Boolean)])];
   const locs=[...new Set([...lodges,...visits].map(x=>x.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
@@ -501,10 +517,10 @@ function renderReps(){
   const counts={};visits.filter(v=>v.date>=todayISO()).forEach(v=>{if(v.repId)counts[v.repId]=(counts[v.repId]||0)+1});
   const q=$("rq").value.trim().toLowerCase(),f=$("rf").value,rk=$("rk").value;
   const isPast=r=>/^Πρώην/.test(r.office||"");
-  const list=sortedReps().filter(r=>(!f||(f==="past"?isPast(r):!isPast(r)))&&(!q||[r.surname,r.name,rankOf(r),r.office,r.year,r.email].join(" ").toLowerCase().includes(q))&&(!rk||rankOf(r)===rk));
+  const list=sortedReps().filter(r=>(!f||(f==="past"?isPast(r):!isPast(r)))&&(!q||[r.surname,r.name,rankOf(r),r.office,r.year,r.email,r.mobile].join(" ").toLowerCase().includes(q))&&(!rk||rankOf(r)===rk));
   $("repStats").innerHTML=`<span><b>${list.length}</b> από ${reps.length} εκπρόσωποι</span><span><b>${reps.filter(r=>!isPast(r)).length}</b> εν ενεργεία</span>`;
   body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Επώνυμο</th><th>Όνομα</th><th>Αξίωμα</th><th>Έτος</th><th>Προσεχείς</th><th></th></tr></thead><tbody>${
-    list.map(r=>`<tr><td><b>${esc(r.surname)}</b>${rankOf(r)?`<div class="meta">${esc(rankOf(r))}</div>`:""}</td><td>${esc(r.name)}${r.email?`<div class="meta">${esc(r.email)}</div>`:""}</td><td>${esc(r.office)}</td><td class="num">${esc(r.year||"")}</td><td class="num">${counts[r.id]||0}</td><td>${canWrite?`<button class="btn ghost sm" data-rep="${esc(r.id)}">Επεξεργασία</button>`:""}</td></tr>`).join("")
+    list.map(r=>`<tr><td><b>${esc(r.surname)}</b>${rankOf(r)?`<div class="meta">${esc(rankOf(r))}</div>`:""}</td><td>${esc(r.name)}${r.email||r.mobile?`<div class="meta">${[r.email,r.mobile].filter(Boolean).map(esc).join(" · ")}</div>`:""}</td><td>${esc(r.office)}</td><td class="num">${esc(r.year||"")}</td><td class="num">${counts[r.id]||0}</td><td>${canWrite?`<button class="btn ghost sm" data-rep="${esc(r.id)}">Επεξεργασία</button>`:""}</td></tr>`).join("")
   }</tbody></table></div>`:`<div class="empty">Κανένας εκπρόσωπος δεν ταιριάζει με την αναζήτηση.</div>`;
   body.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>openRep(repById(b.dataset.rep)));
 }
@@ -673,6 +689,41 @@ $("vNote").onclick=()=>{
 ${SIGN}`;
   openMail({title:"Ειδοποίηση Επαρχίας",to:$("nTo").value,subject:$("nSubj").value,body:$("nBody").value});
 };
+/* ---------- Members: the full roster, read-only reference ---------- */
+let rMemberId="",memberLimit=100;
+const memberStatus=m=>m.x?"Διαγραμμένο":"";
+const memberHay=m=>fold(`${m.s} ${m.f} ${(m.e||[]).join(" ")} ${(m.m||[]).join(" ")} ${(m.l||[]).map(l=>l.join(" ")).join(" ")} ${m.a||""}`);
+const repByMember=()=>{const o={};reps.forEach(r=>{if(r.memberId)o[r.memberId]=r});return o};
+function renderMembers(){
+  const body=$("membersBody");if(!body)return;
+  const lodSel=$("mlod"),cur=lodSel.value,names=new Map();
+  members.forEach(m=>(m.l||[]).forEach(l=>{if(l[1]&&!names.has(l[1]))names.set(l[1],l[0])}));
+  lodSel.innerHTML='<option value="">Όλες οι Στοές</option>'+[...names].sort((a,b)=>(parseInt(a[0])||1e5)-(parseInt(b[0])||1e5)).map(([n,nm])=>`<option value="${esc(n)}">${esc(n)} · ${esc(nm)}</option>`).join("");lodSel.value=names.has(cur)?cur:"";
+  if(!members.length){body.innerHTML=`<div class="empty">Δεν έχουν φορτωθεί ακόμη μέλη.</div>`;$("memberStats").innerHTML="";return}
+  const words=fold($("mq").value).split(/\s+/).filter(Boolean),st=$("ms").value,lod=lodSel.value,rbm=repByMember();
+  const list=members.filter(m=>(!st||(st==="active"?!m.x:st==="x"?m.x:st==="noemail"?!(m.e||[]).length:!!rbm[m.id]))
+    &&(!lod||(m.l||[]).some(l=>l[1]===lod))&&(!words.length||(h=>words.every(w=>h.includes(w)))(memberHay(m))))
+    .sort((a,b)=>a.s.localeCompare(b.s,"el")||a.f.localeCompare(b.f,"el"));
+  $("memberStats").innerHTML=`<span><b>${list.length}</b> από ${members.length} μέλη</span><span><b>${members.filter(m=>(m.e||[]).length).length}</b> με email</span><span><b>${members.filter(m=>(m.m||[]).length).length}</b> με κινητό</span><span><b>${Object.keys(rbm).length}</b> συνδεδεμένοι εκπρόσωποι</span>`;
+  const shown=list.slice(0,memberLimit);
+  body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Μέλος</th><th>Στοές</th><th>Email</th><th>Κινητό</th></tr></thead><tbody>${shown.map(m=>{const r=rbm[m.id];return `<tr${m.x?' class="past"':""}>
+    <td><b>${esc(m.s)}</b> ${esc(m.f)}<div class="meta">${esc(m.d||"")}${m.x?" · Διαγραμμένο":""}</div>${r?`<span class="chip">Εκπρόσωπος${r.office?` · ${esc(firstOffice(r))}`:""}</span>`:""}</td>
+    <td>${(m.l||[]).map(l=>{const lg=lodgeByNo(l[1]);return `<div${lg?pcStyle(lg.province):""}>${lg?'<span class="pdot"></span>':""}${esc(l[0])}${l[1]?` <span class="meta">Αρ. ${esc(l[1])}</span>`:""}${l[2]?` <span class="meta">· ${esc(l[2].replace(/^\d+\.\s*/,""))}</span>`:""}</div>`}).join("")}${m.a?`<div class="meta">${esc(m.a)}</div>`:""}</td>
+    <td>${(m.e||[]).map(e=>`<div><a href="mailto:${esc(e)}">${esc(e)}</a></div>`).join("")||'<span class="meta">—</span>'}</td>
+    <td style="white-space:nowrap">${(m.m||[]).map(x=>`<div><a href="tel:${esc(x)}">${esc(x)}</a></div>`).join("")||'<span class="meta">—</span>'}</td></tr>`}).join("")}</tbody></table></div>${list.length>shown.length?`<div class="toolbar" style="justify-content:center"><button type="button" class="btn" id="memberMore">Εμφάνιση περισσότερων (${list.length-shown.length} ακόμη)</button></div>`:""}`:`<div class="empty">Κανένα μέλος δεν ταιριάζει με την αναζήτηση.</div>`;
+  const more=$("memberMore");if(more)more.onclick=()=>{memberLimit+=200;renderMembers()};
+}
+["mq","ms","mlod"].forEach(id=>$(id).addEventListener("input",()=>{memberLimit=100;renderMembers()}));
+// Rep form: fill email & mobile from the matching member
+$("rFind").onclick=()=>{
+  const s=fold($("rSurname").value),n=fold($("rName").value.replace(/\(.*?\)/g,"")),box=$("rFindList");
+  if(!s){box.innerHTML='<p class="hint">Συμπληρώστε πρώτα το επώνυμο.</p>';return}
+  const c=members.filter(m=>fold(m.s)===s&&(!n||fold(m.f)===n||fold(m.f).startsWith(n+" ")||n.startsWith(fold(m.f)+" "))).slice(0,20);
+  if(!c.length){box.innerHTML='<p class="hint">Δεν βρέθηκε μέλος με αυτό το ονοματεπώνυμο. Δοκιμάστε την καρτέλα «Μέλη».</p>';return}
+  box.innerHTML='<p class="hint">Επιλέξτε το σωστό μέλος:</p>'+c.map((m,i)=>`<button type="button" class="combo-opt" style="text-align:left;border:1px solid var(--line);border-radius:8px;background:var(--surface);font:inherit;color:inherit" data-i="${i}"><div class="who">${esc(m.s)} ${esc(m.f)}${m.x?" · Διαγραμμένο":""}</div><div class="meta">${esc((m.l||[]).map(l=>`${l[0]} ${l[1]}`).join(", "))} · ${esc((m.e||[])[0]||"χωρίς email")}</div></button>`).join("");
+  box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const m=c[Number(b.dataset.i)];$("rEmail").value=(m.e||[])[0]||"";$("rMobile").value=(m.m||[])[0]||"";rMemberId=m.id;box.innerHTML=`<p class="hint">✓ Συνδέθηκε με το μέλος ${esc(m.s)} ${esc(m.f)}. Πατήστε «Αποθήκευση».</p>`});
+};
+
 /* ---------- Emails: province (Publish) and representative ---------- */
 const SIGN="Με Τεκτονικούς χαιρετισμούς,\n\nΠσεβ. Αδ. Δημήτριος Σκιαδόπουλος\nΜέγας Γραμματεύς";
 const PUB_SUBJECT="Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών της Επαρχίας σας";
@@ -783,7 +834,7 @@ function renderPub(){
   $("pubCount").textContent=`${rows.length} ${rows.length===1?"Εγκατάσταση":"Εγκαταστάσεις"}${unas?` · ${unas} χωρίς εκπρόσωπο`:""} · ${miss.length} Στοές χωρίς ημερομηνία`;
   $("pubPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος</th><th>Εκπρόσωπος ΜΔ</th></tr></thead><tbody>${rows.map(v=>{const r=repById(v.repId);return `<tr${pcStyle(v.province)}><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td><td>${esc(v.location||"—")}</td><td>${r?esc(repFull(r)):`<span class="nr">Δεν έχει οριστεί</span>`}</td></tr>`}).join("")}</tbody></table>`:`<div class="empty" style="margin:0">Δεν υπάρχουν Εγκαταστάσεις σε αυτό το διάστημα.</div>`;
   const byRep=new Map();rows.forEach(v=>{const r=repById(v.repId);if(r){if(!byRep.has(r.id))byRep.set(r.id,[]);byRep.get(r.id).push(v)}});
-  $("pubReps").innerHTML=byRep.size?[...byRep].map(([id,vs])=>{const r=repById(id);return `<div class="reprow"><div style="min-width:0"><b>${esc(r.surname)} ${esc(r.name)}</b> <span class="meta">· ${vs.length} ${vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${r.email?esc(r.email):"χωρίς email"}</span></div><button type="button" class="btn ghost sm" data-repmail="${esc(id)}">Email εκπροσώπου</button></div>`}).join(""):`<p class="hint">Δεν έχουν οριστεί ακόμη εκπρόσωποι σε αυτές τις Εγκαταστάσεις.</p>`;
+  $("pubReps").innerHTML=byRep.size?[...byRep].map(([id,vs])=>{const r=repById(id);return `<div class="reprow"><div style="min-width:0"><b>${esc(r.surname)} ${esc(r.name)}</b> <span class="meta">· ${vs.length} ${vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${r.email?esc(r.email):"χωρίς email"}${r.mobile?` · ${esc(r.mobile)}`:""}</span></div><button type="button" class="btn ghost sm" data-repmail="${esc(id)}">Email εκπροσώπου</button></div>`}).join(""):`<p class="hint">Δεν έχουν οριστεί ακόμη εκπρόσωποι σε αυτές τις Εγκαταστάσεις.</p>`;
   $("pubReps").querySelectorAll("[data-repmail]").forEach(b=>b.onclick=()=>repMail(repById(b.dataset.repmail),byRep.get(b.dataset.repmail)));
   $("pubErr").hidden=true;
 }
@@ -835,13 +886,13 @@ $("vDel").onclick=()=>askConfirm(`Διαγραφή της επίσκεψης σ�
 function openRep(r){
   editingRep=r||null;
   $("repTitle").textContent=r?"Επεξεργασία εκπροσώπου":"Νέος εκπρόσωπος";
-  $("rName").value=r?.name||"";$("rSurname").value=r?.surname||"";$("rRank").innerHTML=`<option value="">Αυτόματα (${esc(r?derivedRank(r)||"—":"από αξίωμα")})</option>`+RANKS.map(x=>`<option>${x}</option>`).join("");$("rRank").value=RANKS.includes(r?.rank)?r.rank:"";$("rOffice").value=r?.office||"";$("rYear").value=r?.year||"";$("rEmail").value=r?.email||"";
+  $("rName").value=r?.name||"";$("rSurname").value=r?.surname||"";$("rRank").innerHTML=`<option value="">Αυτόματα (${esc(r?derivedRank(r)||"—":"από αξίωμα")})</option>`+RANKS.map(x=>`<option>${x}</option>`).join("");$("rRank").value=RANKS.includes(r?.rank)?r.rank:"";$("rOffice").value=r?.office||"";$("rYear").value=r?.year||"";$("rEmail").value=r?.email||"";$("rMobile").value=r?.mobile||"";rMemberId=r?.memberId||"";$("rFindList").innerHTML="";
   $("rDel").hidden=!r;$("rErr").hidden=true;openOv("ovRep");
 }
 $("addRep").onclick=()=>openRep(null);
 $("formRep").addEventListener("submit",async e=>{
   e.preventDefault();
-  const data={name:$("rName").value.trim(),surname:$("rSurname").value.trim(),rank:$("rRank").value.trim(),office:$("rOffice").value.trim(),year:$("rYear").value.trim(),email:$("rEmail").value.trim()};
+  const data={name:$("rName").value.trim(),surname:$("rSurname").value.trim(),rank:$("rRank").value.trim(),office:$("rOffice").value.trim(),year:$("rYear").value.trim(),email:$("rEmail").value.trim(),mobile:$("rMobile").value.trim(),memberId:rMemberId};
   if(!data.name||!data.surname){showErr("rErr","Συμπληρώστε όνομα και επώνυμο.");return}
   if(await save("reps",editingRep?.id||newId("r"),data)){closeOv($("formRep"));toast("Αποθηκεύτηκε")}
 });
@@ -1009,12 +1060,12 @@ function newId(p){return p+Date.now().toString(36)+Math.random().toString(36).sl
 function strip(o){const {id,...r}=o;return r}
 function showErr(id,msg){$(id).textContent=msg;$(id).hidden=false}
 const LKEY="lvr-data-v1";
-function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
+function persistLocal(){try{localStorage.setItem(LKEY,JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members}))}catch(e){toast("Η αποθήκευση στον browser απέτυχε")}}
 function loadLocal(){
   let d=null;try{d=JSON.parse(localStorage.getItem(LKEY)||"null")}catch(e){}
   const seed=window.SEED||{};
   visits=d?.visits||seed.visits||[];reps=d?.reps||seed.reps||[];provinces=d?.provinces||seed.provinces||[];
-  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];
+  lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];members=d?.members||[];
   if(!d)persistLocal();
 }
 // Merges SEED.updates not yet applied: new lodges, lodge locations (only where empty), lodgeChanges
@@ -1077,14 +1128,14 @@ render();
     const n=$("storeNotice");n.textContent="Τα δεδομένα αποθηκεύονται μόνο σε αυτόν τον browser. Κρατάτε τακτικά αντίγραφο με την «Εξαγωγή».";n.hidden=false;
     $("backupBar").hidden=false;
     $("exportBtn").onclick=()=>{
-      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied},null,2)],{type:"application/json"});
+      const blob=new Blob([JSON.stringify({visits,reps,provinces,lodges,rankMap,seedApplied,members},null,2)],{type:"application/json"});
       const d=new Date(),stamp=String(d.getDate()).padStart(2,"0")+String(d.getMonth()+1).padStart(2,"0")+String(d.getFullYear()).slice(2);
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`lodge-visits-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();
     };
     $("importFile").onchange=async e=>{
       const f=e.target.files[0];if(!f)return;
       try{const d=JSON.parse(await f.text());if(!Array.isArray(d.visits)||!Array.isArray(d.lodges))throw 0;
-        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};seedApplied=d.seedApplied||[];persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
+        visits=d.visits;reps=d.reps||[];provinces=d.provinces||[];lodges=d.lodges;rankMap=d.rankMap||{};seedApplied=d.seedApplied||[];members=d.members||[];persistLocal();render();toast("Τα δεδομένα επαναφέρθηκαν")}
       catch(err){toast("Το αρχείο δεν είναι έγκυρο αντίγραφο")}
       e.target.value="";
     };
@@ -1096,7 +1147,7 @@ render();
   // Apply pending SEED.updates once the first snapshots of lodges, visits and settings/seed are in.
   const ready=new Set(),mark=k=>{ready.add(k);if(ready.size===3&&!mark.ran){mark.ran=true;applySeedUpdates(seedApplied).then(async added=>{
     if(added.length){try{await db.doc("settings/seed").set({applied:[...seedApplied,...added]})}catch(e){}}})}};
-  sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>reps=a);sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});
+  sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>reps=a);sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});sub("members",a=>members=a.sort((x,y)=>(x.n??0)-(y.n??0)).flatMap(d=>d.items||[]));
   db.doc("settings/rankmap").onSnapshot(d=>{rankMap=(d.exists&&d.data().map)||{};render()},()=>{});
   db.doc("settings/seed").onSnapshot(d=>{seedApplied=(d.exists&&d.data().applied)||[];mark("seed")},()=>{});
 })();
