@@ -97,6 +97,10 @@ tr[style*="--pc"] td:first-child{box-shadow:inset 5px 0 0 var(--pc)}
 .preview .nr{color:var(--warn);font-weight:600}
 .mail{font-size:12px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
 .prov[style*="--pc"]{border-left:5px solid var(--pc)}
+.provroles{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;border-top:1px solid var(--line);padding-top:10px}
+.rolebox .who{font-weight:600}
+.rolebox .addr a{color:var(--lapis);text-decoration:none;font-weight:600}
+@media (max-width:640px){.provroles{grid-template-columns:1fr}}
 .prov{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
 .addr{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:2px}
 .addr .em{font-weight:600;overflow-wrap:anywhere;user-select:all}
@@ -701,9 +705,31 @@ function renderProvs(){
     <div style="min-width:0"><div class="eyebrow">${esc(p.title||"Γραμματεία")}</div><div class="addr"><span class="em">${esc(p.email)}</span> <button type="button" class="btn ghost sm" data-copy="${esc(p.email)}">Αντιγραφή</button></div>
       <div class="meta">${lc[p.short]||0} Στοές · ${counts[p.short]||0} προσεχείς επισκέψεις</div></div>
     <div><button type="button" class="btn ghost sm" data-prov="${esc(p.id)}" ${canWrite?"":"hidden"}>Επεξεργασία</button></div>
+    <div class="provroles">${PROV_ROLES.map(([k,lbl])=>roleBox(p,k,lbl(p))).join("")}</div>
   </div>`).join("")}</div>`;
+  body.querySelectorAll("[data-rpick]").forEach(el=>{const [pid,k]=el.dataset.rpick.split("|");
+    makeCombo(el,$(el.getAttribute("aria-controls")),memberPickSource,it=>setProvRole(pid,k,it.value))});
+  body.querySelectorAll("[data-rclear]").forEach(b=>b.onclick=()=>{const [pid,k]=b.dataset.rclear.split("|");setProvRole(pid,k,null)});
+  body.querySelectorAll("[data-rmail]").forEach(b=>b.onclick=()=>openMail({title:`Email προς ${b.dataset.rlabel}`,to:b.dataset.rmail,subject:"",body:`${b.dataset.rvoc},\n\n\n\n${SIGN}`}));
   body.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyText(b.dataset.copy,b));
   body.querySelectorAll("[data-prov]").forEach(b=>b.onclick=()=>openProv(provinces.find(p=>p.id===b.dataset.prov)));
+}
+// Provincial Grand Master and Provincial Grand Secretary: picked from the members roster; contacts come from the roster
+const gmLabel=p=>/^ΕΜΣτΕ/.test(p.short)||p.id==="p-grand-lodge"?"Μέγας Διδάσκαλος":/^ΠΜΣτ/.test(p.short)?"ΠερΜΔ":"ΕπΜΔ";
+const secLabel=p=>p.title?`Γραμματέας (${p.title})`:"Γραμματέας";
+const PROV_ROLES=[["gm",gmLabel],["sec",secLabel]];
+function roleBox(p,k,label){
+  const m=memberById(p[k+"MemberId"]),name=m?`${m.s} ${m.f}`:(p[k+"Name"]||""),mob=(m?.m||[])[0]||"",em=(m?.e||[])[0]||"",lid=`role-${p.id}-${k}`;
+  return `<div class="rolebox"><div class="eyebrow">${esc(label)}</div>
+    ${canWrite?`<div class="combo" style="max-width:360px"><input data-rpick="${esc(p.id)}|${k}" value="${esc(name)}" placeholder="Αναζήτηση στα Μέλη…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${lid}" aria-label="${esc(label)}"><div class="combo-list" id="${lid}" role="listbox" hidden></div></div>`:`<div class="who">${esc(name||"—")}</div>`}
+    ${m?`<div class="addr" style="margin-top:6px">${mob?`<a href="tel:${esc(mob)}">📞 ${esc(mob)}</a>`:'<span class="meta">χωρίς κινητό</span>'}
+      ${em?`<button type="button" class="btn ghost sm" data-rmail="${esc(em)}" data-rlabel="${esc(label)} ${esc(name)}" data-rvoc="Αγαπητέ Αδελφέ">✉ ${esc(em)}</button>`:'<span class="meta">· χωρίς email</span>'}
+      ${canWrite?`<button type="button" class="btn ghost sm" data-rclear="${esc(p.id)}|${k}" aria-label="Αφαίρεση">✕</button>`:""}</div>`:name&&canWrite?`<div class="addr" style="margin-top:6px"><button type="button" class="btn ghost sm" data-rclear="${esc(p.id)}|${k}" aria-label="Αφαίρεση">✕</button></div>`:""}
+  </div>`;
+}
+async function setProvRole(pid,k,m){
+  const p=provinces.find(x=>x.id===pid);if(!p)return;
+  if(await save("provinces",pid,{...strip(p),[k+"MemberId"]:m?m.id:"",[k+"Name"]:m?`${m.s} ${m.f}`:""}))toast(m?`${k==="gm"?gmLabel(p):"Γραμματέας"}: ${m.s} ${m.f}`:"Αφαιρέθηκε");
 }
 function openProv(p){
   editingProv=p||null;$("provTitle").textContent=p?"Επεξεργασία Επαρχίας":"Νέα Επαρχία";
@@ -714,6 +740,7 @@ $("addProv").onclick=()=>openProv(null);
 $("formProv").addEventListener("submit",async e=>{
   e.preventDefault();
   const data={short:$("pShort").value.trim(),full:$("pFull").value.trim(),email:$("pEmail").value.trim(),title:$("pTitle").value.trim(),order:editingProv?.order??provinces.length+1};
+  ["gmMemberId","gmName","secMemberId","secName"].forEach(k=>{if(editingProv?.[k])data[k]=editingProv[k]});
   if(!data.short){showErr("pErr","Συμπληρώστε τη συντομογραφία.");return}
   const old=editingProv?.short;
   if(await save("provinces",editingProv?.id||newId("p"),data)){
