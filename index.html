@@ -304,6 +304,7 @@ tr.past td{opacity:.6}
         <label class="chk"><input type="checkbox" id="ndHideSent"> Απόκρυψη όσων έλαβαν ευχές</label>
         <button type="button" class="btn primary sm" id="ndGreet">Αποστολή ευχών</button>
         <button type="button" class="btn sm" id="ndReport">Αναφορά σε ΜΔ</button>
+        <button type="button" class="btn sm" id="ndReportMail">Αποστολή αναφοράς στον ΜΔ</button>
       </div>
       <div class="stats" id="ndStats"></div>
       <div id="ndBody"></div>
@@ -1696,11 +1697,12 @@ function greetTodayRows(){
     return {name:v.name||(m?`${m.s} ${m.f}`:"—"),email:v.email||(m?greetMail(m):"")||"—",subject:v.subject||"—",at:v.at?new Date(v.at):null};
   }).sort((a,b)=>(a.at||0)-(b.at||0)||a.name.localeCompare(b.name,"el"));
 }
-$("ndReport").onclick=()=>{
+// Builds today's report; returns null (after showing why) when it cannot
+function greetReportPdf(){
   $("xErr").hidden=true;
-  if(!window.jspdf?.jsPDF||!window.PDF_FONTS){showErr("xErr","Η δημιουργία PDF δεν φόρτωσε. Ανανεώστε τη σελίδα.");return}
+  if(!window.jspdf?.jsPDF||!window.PDF_FONTS){showErr("xErr","Η δημιουργία PDF δεν φόρτωσε. Ανανεώστε τη σελίδα.");return null}
   const rows=greetTodayRows(),t=todayISO();
-  if(!rows.length){showErr("xErr","Σήμερα δεν έχουν σταλεί ακόμη ευχές.");return}
+  if(!rows.length){showErr("xErr","Σήμερα δεν έχουν σταλεί ακόμη ευχές.");return null}
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
   doc.addFileToVFS("DV.ttf",PDF_FONTS.r);doc.addFont("DV.ttf","DV","normal");
   doc.addFileToVFS("DVB.ttf",PDF_FONTS.b);doc.addFont("DVB.ttf","DV","bold");
@@ -1723,7 +1725,22 @@ $("ndReport").onclick=()=>{
   const n=doc.getNumberOfPages(),now=new Date();
   for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("DV","normal");doc.setFontSize(9);doc.setTextColor(...MUTED);
     doc.text(`Εκδόθηκε ${fmtDate(t)} ${hm(now)}`,M,287);doc.text(`Σελίδα ${i} από ${n}`,W-M,287,{align:"right"})}
-  saveFile(`anafora-eyxon-${t}.pdf`,doc.output("blob"),"xErr");
+  return {doc,rows,t,filename:`anafora-eyxon-${t}.pdf`};
+}
+$("ndReport").onclick=()=>{const r=greetReportPdf();if(r)saveFile(r.filename,r.doc.output("blob"),"xErr")};
+// The Grand Master is the «ΕΜΣτΕ» entry's gmMemberId in Επαρχίες; the address stays editable before sending
+function grandMasterEmail(){
+  const p=provinces.find(x=>x.id==="p-grand-lodge")||provinces.find(x=>/^ΕΜΣτΕ/.test(x.short||""));
+  const m=p?.gmMemberId?memberById(p.gmMemberId):null;return m?greetMail(m):"";
+}
+$("ndReportMail").onclick=()=>{
+  const r=greetReportPdf();if(!r)return;
+  const b=r.doc.output("datauristring").split(",")[1];
+  openMail({title:"Αναφορά ευχών στον Μεγάλο Διδάσκαλο",to:grandMasterEmail(),
+    subject:`Αναφορά αποστολής ευχών ονομαστικής εορτής — ${dayStr(r.t)}`,
+    body:`Σεβασμιώτατε Μεγάλε Διδάσκαλε,\n\nσας υποβάλλω συνημμένα την αναφορά αποστολής ευχών ονομαστικής εορτής εκ μέρους σας για σήμερα, ${dayStr(r.t)}.\n\nΣήμερα απεστάλησαν ${r.rows.length} email ευχών:\n${r.rows.map((x,i)=>`${i+1}. ${x.name}`).join("\n")}\n\n${SIGN}`,
+    hint:"Ελέγξτε τον παραλήπτη και το κείμενο πριν την αποστολή. Η αναφορά PDF επισυνάπτεται.",
+    attach:{b64:b,filename:r.filename,mimeType:"application/pdf",label:"Αναφορά PDF"}});
 };
 
 // Publish: the province's installations in a date range, with their representatives
