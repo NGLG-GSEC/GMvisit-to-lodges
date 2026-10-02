@@ -113,6 +113,13 @@ td .num{font-variant-numeric:tabular-nums}
   .grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:no-preference){.visit{transition:border-color .15s}}
+.combo{position:relative}
+.combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;max-height:280px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(10,14,28,.18)}
+.combo-opt{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--line)}
+.combo-opt:last-child{border-bottom:0}
+.combo-opt[aria-selected="true"],.combo-opt:hover{background:var(--lapis-soft)}
+.combo-opt .who{font-weight:600}
+.combo-empty{padding:10px;color:var(--muted);font-size:13px}
 </style>
 
 <div class="wrap">
@@ -171,6 +178,8 @@ td .num{font-variant-numeric:tabular-nums}
     <div class="toolbar" style="margin-top:20px">
       <input class="grow" id="lq" type="search" placeholder="Αναζήτηση Στοάς ή αριθμού…">
       <select id="lp"><option value="">Όλες οι Επαρχίες</option></select>
+      <select id="ls" aria-label="Ταξινόμηση"><option value="">Ταξινόμηση: Αριθμός Στοάς</option><option value="asc">Ημερομηνία: πλησιέστερη πρώτα</option><option value="desc">Ημερομηνία: απώτερη πρώτα</option></select>
+      <label class="chk"><input type="checkbox" id="lnd"> Χωρίς ημερομηνία</label>
       <button class="btn primary" id="addLodge">Νέα Στοά</button>
     </div>
     <div class="stats" id="lodgeStats"></div>
@@ -196,8 +205,8 @@ td .num{font-variant-numeric:tabular-nums}
       <div class="field full"><label for="vLoc">Τόπος</label><input id="vLoc" list="locList" placeholder="Τεκτονικόν Μέγαρον …"></div>
       <div class="field full"><label for="vProv">Επαρχιακή Μεγάλη Στοά</label><select id="vProv"></select>
         <p class="hint" id="vProvMail"></p></div>
-      <div class="field full"><label for="vRep">Εκπρόσωπος</label><input id="vRep" list="repList" placeholder="Πληκτρολογήστε επώνυμο…" autocomplete="off">
-        <p class="hint">Η λίστα προέρχεται από την καρτέλα «Εκπρόσωποι».</p></div>
+      <div class="field full"><label for="vRep">Εκπρόσωπος</label><div class="combo"><input id="vRep" placeholder="Αναζήτηση με όνομα ή επώνυμο…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="vRepList"><div class="combo-list" id="vRepList" role="listbox" hidden></div></div>
+        <p class="hint">Πληκτρολογήστε όνομα ή επώνυμο (χωρίς να μετράνε τόνοι ή κεφαλαία) και επιλέξτε από τη λίστα. Η λίστα προέρχεται από την καρτέλα «Εκπρόσωποι».</p></div>
       <div class="field full"><label for="vNotes">Σημειώσεις</label><input id="vNotes" placeholder="Προαιρετικά"></div>
     </div>
     <div class="err" id="vErr" hidden></div>
@@ -363,7 +372,7 @@ const DEFAULT_RANKS={
  "Μέγας Διδάσκαλος":3,
  "Αναπληρωτής Μέγας Διδάσκαλος":2,"Βοηθός Μέγας Διδάσκαλος":2,"Επαρχιακός Μέγας Διδάσκαλος":2,"Περιφερειακός Μέγας Διδάσκαλος":2,
  "Πρώτος Μέγας Επόπτης":2,"Δεύτερος Μέγας Επόπτης":2,
- "Μέγας Καγκελάριος":1,"Αναπληρωτής Μέγας Καγκελάριος":1,"Μέγας Γραμματέας":1,"Αναπληρωτής Μέγας Γραμματέας":1,"Μέγας Ιερέας":1,
+ "Μέγας Καγκελάριος":1,"Αναπληρωτής Μέγας Καγκελάριος":1,"Μέγας Γραμματέας":1,"Αναπληρωτής Μέγας Γραμματέας":1,"Μέγας Ευχέτης":1,
  "Μέγας Τελετάρχης":1,"Μέγας Επόπτης Έργων":1,"Μέγας Ξιφοφόρος":1,"Μέγας Επιθεωρητής":1,
  "Πρόεδρος Συμβουλίου Μεγάλης Φιλανθρωπίας":1,"Πρόεδρος Μεγάλης Φιλανθρωπίας":1
 };
@@ -382,7 +391,7 @@ function openOv(id){$(id).hidden=false}
 function closeOv(el){el.closest(".overlay").hidden=true}
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>closeOv(b)));
 document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.hidden=true}));
-document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".overlay").forEach(o=>o.hidden=true)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.defaultPrevented)document.querySelectorAll(".overlay").forEach(o=>o.hidden=true)});
 
 /* Tabs */
 function showTab(which){
@@ -469,8 +478,13 @@ function renderLodges(){
   const q=$("lq").value.trim().toLowerCase(),pf=$("lp").value,body=$("lodgesBody"),today=todayISO();
   if(!lodges.length){body.innerHTML=`<div class="empty">Το Μητρώο Στοών είναι κενό.</div>`;$("lodgeStats").innerHTML="";return}
   const next={};visits.filter(v=>v.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).forEach(v=>{if(!next[v.number])next[v.number]=v});
-  const list=sortedLodges().filter(l=>(!pf||l.province===pf)&&(!q||`${l.number} ${l.name} ${l.location||""}`.toLowerCase().includes(q)));
-  $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length} Στοές</span>`;
+  // A lodge has an installation date when it has an upcoming visit.
+  const base=sortedLodges().filter(l=>(!pf||l.province===pf)&&(!q||`${l.number} ${l.name} ${l.location||""}`.toLowerCase().includes(q)));
+  const missing=base.filter(l=>!next[l.number]).length,sort=$("ls").value;
+  let list=$("lnd").checked?base.filter(l=>!next[l.number]):base;
+  if(sort)list=[...list].sort((a,b)=>{const x=next[a.number]?.date,y=next[b.number]?.date;
+    if(!x||!y)return (!x)-(!y);return sort==="asc"?x.localeCompare(y):y.localeCompare(x)});
+  $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length} Στοές</span><span><b>${base.length-missing}</b> με ημερομηνία εγκατάστασης</span><span class="${missing?"warn":""}"><b>${missing}</b> χωρίς ημερομηνία εγκατάστασης</span>`;
   const fmt=d=>{const x=parseISO(d);return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`};
   body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αρ.</th><th>Στοά</th><th>Επαρχία</th><th>Επόμενη επίσκεψη</th><th></th></tr></thead><tbody>${list.map(l=>{const v=next[l.number];return `<tr>
     <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}${l.location?`<div class="meta">${esc(l.location)}</div>`:""}</td><td class="meta">${esc(l.province||"—")}</td>
@@ -479,7 +493,7 @@ function renderLodges(){
   body.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{openVisit(null);fillFromLodge(lodges.find(l=>l.id===b.dataset.lv))});
   body.querySelectorAll("[data-le]").forEach(b=>b.onclick=()=>openLodge(lodges.find(l=>l.id===b.dataset.le)));
 }
-["lq","lp"].forEach(id=>$(id).addEventListener("input",renderLodges));
+["lq","lp","ls","lnd"].forEach(id=>$(id).addEventListener("input",renderLodges));
 function openLodge(l){
   editingLodge=l||null;$("lodgeTitle").textContent=l?"Επεξεργασία Στοάς":"Νέα Στοά";
   $("lNo").value=l?.number||"";$("lName").value=l?.name||"";$("lProv").innerHTML=provOptions(l?.province||"","— Χωρίς Επαρχία —");$("lProv").value=l?.province||"";$("lLoc").value=l?.location||"";
@@ -533,7 +547,7 @@ function openVisit(v){
   $("visitTitle").textContent=v?"Επεξεργασία επίσκεψης":"Νέα επίσκεψη";
   $("vDate").value=v?.date||"";$("vNo").value=v?.number||"";$("vLodge").value=v?.lodge||"";
   $("vLoc").value=v?.location||"";$("vProv").value=v?.province||"";$("vNotes").value=v?.notes||"";
-  $("vRep").value=v?.repId&&repById(v.repId)?repOpt(repById(v.repId)):"";
+  $("vRep").value=v?.repId&&repById(v.repId)?repOpt(repById(v.repId)):"";comboClose();
   const cur=v?.province||"",ps=sortedProvs();
   $("vProv").innerHTML='<option value="">— Χωρίς Επαρχία —</option>'+ps.map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("")+(cur&&!provByShort(cur)?`<option>${esc(cur)}</option>`:"");
   $("vProv").value=cur;updProvMail();
@@ -545,6 +559,30 @@ function fillFromLodge(l){if(!l)return;$("vLodge").value=l.name;$("vNo").value=l
 $("vLodge").addEventListener("input",()=>{const m=$("vLodge").value.match(/^\s*(\S+)\s*·\s*(.+)$/);if(m&&lodgeByNo(m[1]))fillFromLodge(lodgeByNo(m[1]));else if(/^\s*\d+\s*$/.test($("vLodge").value)&&lodgeByNo($("vLodge").value)&&!$("vLodge").matches(":focus"))fillFromLodge(lodgeByNo($("vLodge").value))});
 $("vLodge").addEventListener("change",()=>{const v=$("vLodge").value.trim();if(/^\S+$/.test(v)&&lodgeByNo(v))fillFromLodge(lodgeByNo(v))});
 $("vNo").addEventListener("change",()=>{const l=lodgeByNo($("vNo").value);if(l)fillFromLodge(l)});
+/* Rep search: instant, accent- and case-insensitive match on name, surname or office */
+const fold=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/ς/g,"σ");
+let comboIdx=-1,comboItems=[];
+function comboClose(){$("vRepList").hidden=true;$("vRep").setAttribute("aria-expanded","false");comboIdx=-1}
+function comboRender(){
+  const words=fold($("vRep").value).split(/\s+/).filter(Boolean),box=$("vRepList");
+  comboItems=sortedReps().filter(r=>{const h=fold(`${r.surname} ${r.name} ${r.office||""}`);return words.every(w=>h.includes(w))}).slice(0,60);
+  comboIdx=comboItems.length&&words.length?0:-1;
+  box.innerHTML=comboItems.length?comboItems.map((r,i)=>`<div class="combo-opt" role="option" id="vRepOpt${i}" data-i="${i}" aria-selected="${i===comboIdx}"><div class="who">${esc(r.surname)} ${esc(r.name)}</div><div class="meta">${esc(rankOf(r))}${r.office?` · ${esc(r.office)}`:""}${r.year?` (${esc(r.year)})`:""}</div></div>`).join(""):`<div class="combo-empty">Δεν βρέθηκε εκπρόσωπος.</div>`;
+  box.hidden=false;$("vRep").setAttribute("aria-expanded","true");
+}
+function comboMark(){$("vRepList").querySelectorAll(".combo-opt").forEach((o,i)=>o.setAttribute("aria-selected",i===comboIdx));const a=$("vRepOpt"+comboIdx);if(a)a.scrollIntoView({block:"nearest"})}
+function comboPick(i){const r=comboItems[i];if(!r)return;$("vRep").value=repOpt(r);comboClose()}
+$("vRep").addEventListener("input",comboRender);
+$("vRep").addEventListener("focus",()=>{if(!$("vRep").disabled&&!reps.some(r=>repOpt(r)===$("vRep").value.trim()))comboRender()});
+$("vRep").addEventListener("keydown",e=>{
+  const open=!$("vRepList").hidden;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();if(!open){comboRender();return}
+    if(comboItems.length){comboIdx=(comboIdx+(e.key==="ArrowDown"?1:-1)+comboItems.length)%comboItems.length;comboMark()}}
+  else if(e.key==="Enter"&&open&&comboIdx>=0){e.preventDefault();comboPick(comboIdx)}
+  else if(e.key==="Escape"&&open){e.preventDefault();comboClose()}
+});
+$("vRepList").addEventListener("mousedown",e=>{const o=e.target.closest(".combo-opt");if(o){e.preventDefault();comboPick(Number(o.dataset.i))}});
+$("vRep").addEventListener("blur",()=>setTimeout(comboClose,120));
 function updProvMail(){const p=provByShort($("vProv").value);$("vProvMail").textContent=p?.email?`Γραμματεία (${p.title||""}): ${p.email}`:""}
 $("vProv").addEventListener("change",updProvMail);
 $("addVisit").onclick=()=>openVisit(null);
@@ -577,7 +615,7 @@ $("formVisit").addEventListener("submit",async e=>{
   const data={date:$("vDate").value,number:$("vNo").value.trim(),lodge:clean($("vLodge").value),location:$("vLoc").value.trim(),province:$("vProv").value.trim(),repId:"",notes:$("vNotes").value.trim()};
   if(!data.date||!data.lodge){showErr("vErr","Συμπληρώστε ημερομηνία και όνομα Στοάς.");return}
   const rv=$("vRep").value.trim();
-  if(rv){const r=reps.find(r=>repOpt(r)===rv);if(!r){showErr("vErr","Επιλέξτε εκπρόσωπο από τη λίστα (πληκτρολογήστε το επώνυμο).");return}data.repId=r.id}
+  if(rv){const r=reps.find(r=>repOpt(r)===rv);if(!r){showErr("vErr","Επιλέξτε εκπρόσωπο από τη λίστα αναζήτησης (πληκτρολογήστε όνομα ή επώνυμο).");return}data.repId=r.id}
   const id=editingVisit?.id||newId("v");
   if(await save("visits",id,data)){closeOv($("formVisit"));toast("Αποθηκεύτηκε")}
 });
@@ -786,7 +824,15 @@ async function applySeedUpdates(done){
         const nv={...strip(v)};
         if(ch.name&&v.lodge===l.name)nv.lodge=ch.name;
         if(ch.location&&(!v.location||v.location===l.location))nv.location=ch.location;
-        if(nv.lodge!==v.lodge||nv.location!==v.location)good=await save("visits",v.id,nv,true)&&good}}
+        if(ch.province&&(!v.province||v.province===l.province))nv.province=ch.province;
+        if(nv.lodge!==v.lodge||nv.location!==v.location||nv.province!==v.province)good=await save("visits",v.id,nv,true)&&good}}
+    // officeRenames rewrite rep offices (incl. «Πρώην …») and carry any rank override to the new name
+    for(const [from,to] of Object.entries(u.officeRenames||{})){
+      for(const r of reps.filter(r=>(r.office||"").includes(from)))good=await save("reps",r.id,{...strip(r),office:r.office.split(from).join(to)},true)&&good;
+      if(from in rankMap){const next={...rankMap,[to]:rankMap[from]};delete next[from];
+        if(db){try{await db.doc("settings/rankmap").set({map:next})}catch(e){good=false}}
+        rankMap=next}
+    }
     for(const v of u.visits||[])if(!visits.some(x=>x.id===v.id||(String(x.number)===v.number&&x.date===v.date)))good=await save("visits",v.id,strip(v),true)&&good;
     if(good)ok.push(u.id);
   }

@@ -426,7 +426,7 @@ window.SEED={
    "id": "l-9",
    "number": "9",
    "name": "Ισις",
-   "province": "ΕπΜΣτ. Αθηνών"
+   "province": "ΕΜΣτΕ Α.Ε. & Α.Τ."
   },
   {
    "id": "l-90",
@@ -709,6 +709,34 @@ window.SEED={
     "54": {
      "location": "Τεκτονικόν Μέγαρον, Βρεσθένης 16, Αθήνα"
     }
+   }
+  },
+  {
+   "id": "2026-10-isis-9-grand-lodge",
+   "lodgeChanges": {
+    "9": {
+     "province": "ΕΜΣτΕ Α.Ε. & Α.Τ."
+    }
+   }
+  },
+  {
+   "id": "2026-10-aegean-locations",
+   "lodgeChanges": {
+    "107": {
+     "location": "Σαντορίνη"
+    },
+    "110": {
+     "location": "Μύκονος"
+    },
+    "114": {
+     "location": "Σύρος"
+    }
+   }
+  },
+  {
+   "id": "2026-10-megas-efchetis",
+   "officeRenames": {
+    "Μέγας Ιερέας": "Μέγας Ευχέτης"
    }
   }
  ]
