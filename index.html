@@ -786,7 +786,8 @@ async function applySeedUpdates(done){
         const nv={...strip(v)};
         if(ch.name&&v.lodge===l.name)nv.lodge=ch.name;
         if(ch.location&&(!v.location||v.location===l.location))nv.location=ch.location;
-        if(nv.lodge!==v.lodge||nv.location!==v.location)good=await save("visits",v.id,nv,true)&&good}}
+        if(ch.province&&(!v.province||v.province===l.province))nv.province=ch.province;
+        if(nv.lodge!==v.lodge||nv.location!==v.location||nv.province!==v.province)good=await save("visits",v.id,nv,true)&&good}}
     for(const v of u.visits||[])if(!visits.some(x=>x.id===v.id||(String(x.number)===v.number&&x.date===v.date)))good=await save("visits",v.id,strip(v),true)&&good;
     if(good)ok.push(u.id);
   }
