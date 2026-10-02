@@ -122,6 +122,10 @@ td .num{font-variant-numeric:tabular-nums}
   .grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:no-preference){.visit{transition:border-color .15s}}
+#ovNote{z-index:12}
+.subhead{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
+.reprow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.reprow:last-child{border-bottom:0}
 .combo{position:relative}
 .combo-filter{flex:1 1 220px;min-width:0}
 .combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;max-height:280px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(10,14,28,.18)}
@@ -166,6 +170,7 @@ td .num{font-variant-numeric:tabular-nums}
       <button class="btn primary" id="addVisit">Νέα επίσκεψη</button>
       <button class="btn" id="importVisits">Επικόλληση λίστας</button>
       <button class="btn" id="reportBtn">Αναφορά PDF</button>
+      <button class="btn" id="pubBtn" title="Ενημέρωση Επαρχιακού Γραμματέα και εκπροσώπων">Publish</button>
     </div>
     <div id="months"></div>
   </section>
@@ -224,6 +229,7 @@ td .num{font-variant-numeric:tabular-nums}
     <div class="actions">
       <button type="button" class="btn danger left" id="vDel" hidden>Διαγραφή</button>
       <button type="button" class="btn" id="vNote">Ειδοποίηση Επαρχίας</button>
+      <button type="button" class="btn" id="vRepMail">Ενημέρωση Εκπροσώπου</button>
       <button type="button" class="btn ghost" data-close>Άκυρο</button>
       <button type="submit" class="btn primary">Αποθήκευση</button>
     </div>
@@ -239,6 +245,7 @@ td .num{font-variant-numeric:tabular-nums}
       <div class="field"><label for="rRank">Βαθμός</label><select id="rRank"></select></div>
       <div class="field full"><label for="rOffice">Αξίωμα</label><input id="rOffice" placeholder="π.χ. Μέγας Καγκελάριος"></div>
       <div class="field"><label for="rYear">Έτος</label><input id="rYear" inputmode="numeric" placeholder="π.χ. 2024"></div>
+      <div class="field full"><label for="rEmail">Email</label><input id="rEmail" type="email" inputmode="email" autocomplete="off" placeholder="για την «Ενημέρωση Εκπροσώπου»"></div>
     </div>
     <div class="err" id="rErr" hidden></div>
     <div class="actions">
@@ -299,17 +306,46 @@ td .num{font-variant-numeric:tabular-nums}
   </form>
 </div>
 
+<div class="overlay" id="ovPub" hidden>
+  <div class="panel wide">
+    <h3>Publish — Ενημέρωση Επαρχίας</h3>
+    <div class="grid">
+      <div class="field full"><label for="pubProv">Επαρχία</label><select id="pubProv"></select><p class="hint" id="pubMail"></p></div>
+      <div class="field"><label for="pubFrom">Από</label><input id="pubFrom" type="date"></div>
+      <div class="field"><label for="pubTo">Έως</label><input id="pubTo" type="date"></div>
+      <div class="field full"><label class="chk"><input type="checkbox" id="pubMissing"> Να αναφέρονται και οι Στοές χωρίς ημερομηνία εγκατάστασης</label></div>
+    </div>
+    <p class="hint" id="pubCount"></p>
+    <div class="preview" id="pubPreview"></div>
+    <h4 class="subhead">Ενημέρωση εκπροσώπων</h4>
+    <div id="pubReps"></div>
+    <div class="err" id="pubErr" hidden></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn primary" id="pubCompose">Email προς Επαρχιακό Γραμματέα</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="ovNote" hidden>
   <form class="panel" id="formNote" novalidate>
-    <h3>Ειδοποίηση Επαρχίας</h3>
+    <h3 id="nTitle">Ειδοποίηση Επαρχίας</h3>
+    <p class="hint" id="nHint" hidden></p>
     <div class="grid">
       <div class="field full"><label for="nTo">Προς</label><div class="addr"><input id="nTo" style="flex:1 1 200px;min-width:0"><button type="button" class="btn ghost sm" data-cp="nTo">Αντιγραφή</button></div></div>
       <div class="field full"><label for="nSubj">Θέμα</label><div class="addr"><input id="nSubj" style="flex:1 1 200px;min-width:0"><button type="button" class="btn ghost sm" data-cp="nSubj">Αντιγραφή</button></div></div>
       <div class="field full"><label for="nBody">Κείμενο</label><textarea id="nBody" style="min-height:220px"></textarea>
         <div class="actions" style="margin-top:6px"><button type="button" class="btn ghost sm" data-cp="nBody">Αντιγραφή κειμένου</button></div></div>
     </div>
-    <p class="hint">Επικολλήστε τα στο email σας. Μπορείτε να διορθώσετε το κείμενο πριν την αντιγραφή.</p>
-    <div class="actions"><button type="button" class="btn primary" data-close>Κλείσιμο</button></div>
+    <p class="hint" id="nHow">Μπορείτε να διορθώσετε το κείμενο πριν την αποστολή. Πολλοί παραλήπτες: χωρίστε τα email με κόμμα.</p>
+    <div class="err" id="nErr" hidden></div>
+    <p class="hint" id="nStatus" aria-live="polite"></p>
+    <div class="actions">
+      <a class="btn ghost left" id="nMailto" href="#" target="_blank" rel="noopener">Άνοιγμα στο πρόγραμμα email</a>
+      <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn" id="nDraft" hidden>Πρόχειρο στο Gmail</button>
+      <button type="button" class="btn primary" id="nSend" hidden>Αποστολή μέσω Gmail</button>
+    </div>
   </form>
 </div>
 
@@ -465,10 +501,10 @@ function renderReps(){
   const counts={};visits.filter(v=>v.date>=todayISO()).forEach(v=>{if(v.repId)counts[v.repId]=(counts[v.repId]||0)+1});
   const q=$("rq").value.trim().toLowerCase(),f=$("rf").value,rk=$("rk").value;
   const isPast=r=>/^Πρώην/.test(r.office||"");
-  const list=sortedReps().filter(r=>(!f||(f==="past"?isPast(r):!isPast(r)))&&(!q||[r.surname,r.name,rankOf(r),r.office,r.year].join(" ").toLowerCase().includes(q))&&(!rk||rankOf(r)===rk));
+  const list=sortedReps().filter(r=>(!f||(f==="past"?isPast(r):!isPast(r)))&&(!q||[r.surname,r.name,rankOf(r),r.office,r.year,r.email].join(" ").toLowerCase().includes(q))&&(!rk||rankOf(r)===rk));
   $("repStats").innerHTML=`<span><b>${list.length}</b> από ${reps.length} εκπρόσωποι</span><span><b>${reps.filter(r=>!isPast(r)).length}</b> εν ενεργεία</span>`;
   body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Επώνυμο</th><th>Όνομα</th><th>Αξίωμα</th><th>Έτος</th><th>Προσεχείς</th><th></th></tr></thead><tbody>${
-    list.map(r=>`<tr><td><b>${esc(r.surname)}</b>${rankOf(r)?`<div class="meta">${esc(rankOf(r))}</div>`:""}</td><td>${esc(r.name)}</td><td>${esc(r.office)}</td><td class="num">${esc(r.year||"")}</td><td class="num">${counts[r.id]||0}</td><td>${canWrite?`<button class="btn ghost sm" data-rep="${esc(r.id)}">Επεξεργασία</button>`:""}</td></tr>`).join("")
+    list.map(r=>`<tr><td><b>${esc(r.surname)}</b>${rankOf(r)?`<div class="meta">${esc(rankOf(r))}</div>`:""}</td><td>${esc(r.name)}${r.email?`<div class="meta">${esc(r.email)}</div>`:""}</td><td>${esc(r.office)}</td><td class="num">${esc(r.year||"")}</td><td class="num">${counts[r.id]||0}</td><td>${canWrite?`<button class="btn ghost sm" data-rep="${esc(r.id)}">Επεξεργασία</button>`:""}</td></tr>`).join("")
   }</tbody></table></div>`:`<div class="empty">Κανένας εκπρόσωπος δεν ταιριάζει με την αναζήτηση.</div>`;
   body.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>openRep(repById(b.dataset.rep)));
 }
@@ -634,11 +670,152 @@ $("vNote").onclick=()=>{
 
 Παρακαλούμε όπως ενημερώσετε σχετικά τη Στοά.
 
-Με Τεκτονικούς χαιρετισμούς,
+${SIGN}`;
+  openMail({title:"Ειδοποίηση Επαρχίας",to:$("nTo").value,subject:$("nSubj").value,body:$("nBody").value});
+};
+/* ---------- Emails: province (Publish) and representative ---------- */
+const SIGN="Με Τεκτονικούς χαιρετισμούς,\n\nΠσεβ. Αδ. Δημήτριος Σκιαδόπουλος\nΜέγας Γραμματεύς";
+const PUB_SUBJECT="Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών της Επαρχίας σας";
+const dayStr=iso=>{const d=parseISO(iso);return `${DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`};
+const repFull=r=>{const o=firstOffice(r);return `${rankOf(r)||"Αδ."} ${r.name} ${r.surname}${o?`, ${o}`:""}`};
+const repVocative=r=>(rankOf(r)||"Αγαπητός Αδ.").replace(/ος Αδ\.$/,"ε Αδελφέ").replace(/^Αγαπητός$/,"Αγαπητέ Αδελφέ");
+const lodgeRef=v=>`Σ.Σ. «${v.lodge}»${v.number?` Αρ. ${v.number}`:""}`;
+const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+let mcpNs;
+async function getMcp(){if(mcpNs===undefined){try{mcpNs=window.claude?await window.claude.use("mcp"):null}catch(e){mcpNs=null}}return mcpNs}
+function mailTo(){return $("nTo").value.split(/[\s,;]+/).filter(Boolean)}
+function updMailto(){$("nMailto").href=`mailto:${encodeURIComponent(mailTo().join(","))}?subject=${encodeURIComponent($("nSubj").value)}&body=${encodeURIComponent($("nBody").value)}`}
+["nTo","nSubj","nBody"].forEach(id=>$(id).addEventListener("input",()=>{updMailto();disarmSend()}));
+let sendTimer=0;
+function disarmSend(){clearTimeout(sendTimer);delete $("nSend").dataset.armed;$("nSend").textContent="Αποστολή μέσω Gmail"}
+function openMail({title,to,subject,body,hint}){
+  $("nTitle").textContent=title;$("nTo").value=to||"";$("nSubj").value=subject;$("nBody").value=body;
+  $("nHint").textContent=hint||"";$("nHint").hidden=!hint;$("nErr").hidden=true;$("nStatus").textContent="";
+  disarmSend();updMailto();openOv("ovNote");
+  getMcp().then(m=>{$("nSend").hidden=$("nDraft").hidden=!m});
+}
+const GMAIL_ERR={
+  server_not_connected:"Το Gmail δεν είναι συνδεδεμένο. Προσθέστε το στο claude.ai → Settings → Connectors και δοκιμάστε ξανά.",
+  selection_required:"Επιλέξτε ποιον λογαριασμό Gmail θα χρησιμοποιεί η σελίδα (το claude.ai θα σας ρωτήσει) και δοκιμάστε ξανά.",
+  needs_reauth:"Η σύνδεση με το Gmail έληξε. Συνδέστε το ξανά στο claude.ai → Settings → Connectors.",
+  not_in_manifest:"Δεν δόθηκε άδεια χρήσης του Gmail για αυτή τη σελίδα. Χρησιμοποιήστε το «Άνοιγμα στο πρόγραμμα email» ή την αντιγραφή.",
+  not_granted:"Η αποστολή μέσω Gmail δεν επιτρέπεται σε αυτή την προβολή. Χρησιμοποιήστε το «Άνοιγμα στο πρόγραμμα email» ή την αντιγραφή.",
+  consent_required:"Δεν δόθηκε άδεια χρήσης του Gmail. Πατήστε ξανά την αποστολή για να σας ρωτήσει πάλι.",
+  blocked_by_policy:"Ο οργανισμός σας δεν επιτρέπει αποστολή μέσω Gmail από αυτή τη σελίδα.",
+  approval_required:"Ο οργανισμός σας απαιτεί έγκριση για αποστολή μέσω Gmail από αυτή τη σελίδα."
+};
+async function gmail(tool){
+  const to=mailTo(),bad=to.filter(x=>!EMAIL_RE.test(x));
+  if(!to.length){showErr("nErr","Συμπληρώστε το email του παραλήπτη.");return}
+  if(bad.length){showErr("nErr","Μη έγκυρο email: "+bad.join(", "));return}
+  $("nErr").hidden=true;
+  const m=await getMcp();if(!m){showErr("nErr","Η αποστολή μέσω Gmail δεν είναι διαθέσιμη εδώ. Χρησιμοποιήστε το «Άνοιγμα στο πρόγραμμα email» ή την αντιγραφή.");return}
+  const sending=tool==="send_message";
+  ["nSend","nDraft"].forEach(id=>$(id).disabled=true);$("nStatus").textContent=sending?"Αποστολή…":"Αποθήκευση πρόχειρου…";
+  try{
+    const res=await m.callTool("Gmail",tool,{to,subject:$("nSubj").value,body:$("nBody").value});
+    const t=new Date().toLocaleTimeString("el-GR",{hour:"2-digit",minute:"2-digit"});
+    if(sending){$("nStatus").textContent=`✓ Στάλθηκε στις ${t} προς ${to.join(", ")}.`;toast("Το email στάλθηκε")}
+    else{const url=res?.payload?.viewUrl;$("nStatus").innerHTML=`✓ Αποθηκεύτηκε ως πρόχειρο στο Gmail (${t}).${url?` <a href="${esc(url)}" target="_blank" rel="noopener">Άνοιγμα πρόχειρου</a>`:""}`;toast("Αποθηκεύτηκε ως πρόχειρο")}
+  }catch(e){
+    $("nStatus").textContent="";
+    const code=e?.code;
+    showErr("nErr",GMAIL_ERR[code]||(code==="tool_error"?"Το Gmail απέρριψε το μήνυμα: "+(e.message||""):
+      sending?"Δεν είναι βέβαιο αν το μήνυμα στάλθηκε. Ελέγξτε τα «Απεσταλμένα» στο Gmail πριν το στείλετε ξανά.":"Η αποθήκευση του πρόχειρου δεν ολοκληρώθηκε. Δοκιμάστε ξανά σε λίγο."));
+  }finally{["nSend","nDraft"].forEach(id=>$(id).disabled=false)}
+}
+// Sending is irreversible: the first click arms, the second sends.
+$("nSend").onclick=()=>{
+  const to=mailTo();
+  if(!$("nSend").dataset.armed){
+    if(!to.length){showErr("nErr","Συμπληρώστε το email του παραλήπτη.");return}
+    $("nSend").dataset.armed="1";$("nSend").textContent=`Επιβεβαίωση: αποστολή προς ${to.join(", ")}`;
+    clearTimeout(sendTimer);sendTimer=setTimeout(disarmSend,6000);return}
+  disarmSend();gmail("send_message");
+};
+$("nDraft").onclick=()=>gmail("create_draft");
 
-Δημήτριος Σκιαδόπουλος
-Μέγας Καγκελάριος`;
-  openOv("ovNote");
+// Representative briefing: one email for one representative's visits
+function repMail(r,list){
+  list=[...list].sort((a,b)=>a.date.localeCompare(b.date));
+  const one=list.length===1,v=list[0];
+  const item=v=>{const p=provByShort(v.province);return `${lodgeRef(v)}
+   Ημερομηνία: ${dayStr(v.date)}${v.location?`
+   Τόπος: ${v.location}`:""}${v.province?`
+   Επαρχία: ${p?.full||v.province}${p?.email?` (Γραμματεία: ${p.email})`:""}`:""}`};
+  const body=`${repVocative(r)},
+
+Σας ενημερώνουμε ότι έχετε οριστεί να εκπροσωπήσετε τον Μεγάλο Διδάσκαλο ${one?"στην Εγκατάσταση του Σεβασμίου Διδασκάλου της κάτωθι Σεβαστής Στοάς":"στις Εγκαταστάσεις των Σεβασμίων Διδασκάλων των κάτωθι Σεβαστών Στοών"}:
+
+${one?item(v):list.map((v,i)=>`${i+1}. ${item(v)}`).join("\n\n")}
+
+Η αρμόδια Επαρχιακή Μεγάλη Στοά ενημερώνεται σχετικά. Παρακαλούμε όπως έλθετε σε επικοινωνία με τη Γραμματεία της Επαρχίας ή με τον Σεβάσμιο της Στοάς για την ώρα έναρξης και τις λεπτομέρειες της τελετής, και όπως μας ενημερώσετε έγκαιρα σε περίπτωση κωλύματος.
+
+Σας ευχαριστούμε θερμά για την εκπροσώπηση.
+
+${SIGN}`;
+  openMail({title:"Ενημέρωση Εκπροσώπου",to:r.email||"",
+    subject:one?`Ενημέρωση Εκπροσώπησης ΜΔ — Εγκατάσταση Σεβασμίου ${lodgeRef(v)} — ${dayStr(v.date)}`:"Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών",
+    body,hint:r.email?"":`Ο ${r.surname} ${r.name} δεν έχει email. Συμπληρώστε το παρακάτω ή προσθέστε το στην καρτέλα «Εκπρόσωποι».`});
+}
+$("vRepMail").onclick=()=>{
+  const r=reps.find(r=>repOpt(r)===$("vRep").value.trim()),date=$("vDate").value,lodge=clean($("vLodge").value);
+  if(!date||!lodge){showErr("vErr","Συμπληρώστε πρώτα ημερομηνία και Στοά.");return}
+  if(!r){showErr("vErr","Επιλέξτε πρώτα εκπρόσωπο από τη λίστα αναζήτησης.");return}
+  $("vErr").hidden=true;
+  repMail(r,[{date,lodge,number:$("vNo").value.trim(),location:$("vLoc").value.trim(),province:$("vProv").value}]);
+};
+
+// Publish: the province's installations in a date range, with their representatives
+function pubRows(){
+  const prov=$("pubProv").value,from=$("pubFrom").value,to=$("pubTo").value;
+  return visits.filter(v=>v.province===prov&&(!from||v.date>=from)&&(!to||v.date<=to))
+    .sort((a,b)=>a.date.localeCompare(b.date)||(Number(a.number)||0)-(Number(b.number)||0));
+}
+function pubMissing(){
+  const prov=$("pubProv").value,today=todayISO(),has=new Set(visits.filter(v=>v.date>=today).map(v=>String(v.number)));
+  return sortedLodges().filter(l=>l.province===prov&&!has.has(String(l.number)));
+}
+function renderPub(){
+  const p=provByShort($("pubProv").value),rows=pubRows(),miss=pubMissing();
+  $("pubMail").textContent=p?.email?`Προς: ${p.title||"Γραμματεία"} — ${p.email}`:"Η Επαρχία δεν έχει email Γραμματείας (καρτέλα «Επαρχίες»).";
+  const unas=rows.filter(v=>!repById(v.repId)).length;
+  $("pubCount").textContent=`${rows.length} ${rows.length===1?"Εγκατάσταση":"Εγκαταστάσεις"}${unas?` · ${unas} χωρίς εκπρόσωπο`:""} · ${miss.length} Στοές χωρίς ημερομηνία`;
+  $("pubPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος</th><th>Εκπρόσωπος ΜΔ</th></tr></thead><tbody>${rows.map(v=>{const r=repById(v.repId);return `<tr${pcStyle(v.province)}><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td><td>${esc(v.location||"—")}</td><td>${r?esc(repFull(r)):`<span class="nr">Δεν έχει οριστεί</span>`}</td></tr>`}).join("")}</tbody></table>`:`<div class="empty" style="margin:0">Δεν υπάρχουν Εγκαταστάσεις σε αυτό το διάστημα.</div>`;
+  const byRep=new Map();rows.forEach(v=>{const r=repById(v.repId);if(r){if(!byRep.has(r.id))byRep.set(r.id,[]);byRep.get(r.id).push(v)}});
+  $("pubReps").innerHTML=byRep.size?[...byRep].map(([id,vs])=>{const r=repById(id);return `<div class="reprow"><div style="min-width:0"><b>${esc(r.surname)} ${esc(r.name)}</b> <span class="meta">· ${vs.length} ${vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${r.email?esc(r.email):"χωρίς email"}</span></div><button type="button" class="btn ghost sm" data-repmail="${esc(id)}">Email εκπροσώπου</button></div>`}).join(""):`<p class="hint">Δεν έχουν οριστεί ακόμη εκπρόσωποι σε αυτές τις Εγκαταστάσεις.</p>`;
+  $("pubReps").querySelectorAll("[data-repmail]").forEach(b=>b.onclick=()=>repMail(repById(b.dataset.repmail),byRep.get(b.dataset.repmail)));
+  $("pubErr").hidden=true;
+}
+function provinceMailBody(p,rows,miss){
+  const lines=rows.map((v,i)=>{const r=repById(v.repId);return `${i+1}. ${dayStr(v.date)} — ${lodgeRef(v)}${v.location?` — ${v.location}`:""}
+   Εκπρόσωπος ΜΔ: ${r?repFull(r):"θα οριστεί και θα σας γνωστοποιηθεί"}`}).join("\n\n");
+  const unas=rows.some(v=>!repById(v.repId));
+  return `Αγαπητέ Αδελφέ${p?.title?" "+p.title:""},
+
+Σας γνωρίζουμε ότι στις Εγκαταστάσεις των Σεβασμίων Διδασκάλων των Σεβαστών Στοών της Επαρχίας σας${p?.full?` (${p.full})`:""} τον Μεγάλο Διδάσκαλο θα εκπροσωπήσουν οι κάτωθι Αδελφοί:
+
+${lines}
+${unas?"\nΓια τις Εγκαταστάσεις όπου δεν έχει ακόμη οριστεί εκπρόσωπος θα ακολουθήσει νεότερη ενημέρωση.\n":""}${miss.length?`
+Δεν μας έχει ακόμη γνωστοποιηθεί η ημερομηνία Εγκατάστασης για τις Σεβαστές Στοές: ${miss.map(l=>`«${l.name}» Αρ. ${l.number}`).join(", ")}. Παρακαλούμε όπως μας τη γνωστοποιήσετε.
+`:""}
+Παρακαλούμε όπως ενημερώσετε σχετικά τις Σεβαστές Στοές.
+
+${SIGN}`;
+}
+$("pubBtn").onclick=()=>{
+  const cur=$("fProv").value||$("pubProv").value;
+  $("pubProv").innerHTML=sortedProvs().map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("");
+  if(cur&&provByShort(cur))$("pubProv").value=cur;
+  if(!$("pubFrom").value)$("pubFrom").value=todayISO();
+  renderPub();openOv("ovPub");
+};
+["pubProv","pubFrom","pubTo","pubMissing"].forEach(id=>$(id).addEventListener("input",renderPub));
+$("pubCompose").onclick=()=>{
+  const p=provByShort($("pubProv").value),rows=pubRows(),miss=$("pubMissing").checked?pubMissing():[];
+  if(!rows.length&&!miss.length){showErr("pubErr","Δεν υπάρχουν Εγκαταστάσεις για αποστολή σε αυτό το διάστημα.");return}
+  openMail({title:"Publish — Ενημέρωση Επαρχίας",to:p?.email||"",subject:PUB_SUBJECT,body:provinceMailBody(p,rows,miss),
+    hint:p?.email?"":"Η Επαρχία δεν έχει email Γραμματείας — συμπληρώστε το παρακάτω."});
 };
 document.querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",async()=>{
   const el=$(b.dataset.cp);try{await navigator.clipboard.writeText(el.value);toast("Αντιγράφηκε")}catch(e){el.focus();el.select();toast("Επιλέχθηκε — πατήστε Αντιγραφή")}
@@ -658,13 +835,13 @@ $("vDel").onclick=()=>askConfirm(`Διαγραφή της επίσκεψης σ�
 function openRep(r){
   editingRep=r||null;
   $("repTitle").textContent=r?"Επεξεργασία εκπροσώπου":"Νέος εκπρόσωπος";
-  $("rName").value=r?.name||"";$("rSurname").value=r?.surname||"";$("rRank").innerHTML=`<option value="">Αυτόματα (${esc(r?derivedRank(r)||"—":"από αξίωμα")})</option>`+RANKS.map(x=>`<option>${x}</option>`).join("");$("rRank").value=RANKS.includes(r?.rank)?r.rank:"";$("rOffice").value=r?.office||"";$("rYear").value=r?.year||"";
+  $("rName").value=r?.name||"";$("rSurname").value=r?.surname||"";$("rRank").innerHTML=`<option value="">Αυτόματα (${esc(r?derivedRank(r)||"—":"από αξίωμα")})</option>`+RANKS.map(x=>`<option>${x}</option>`).join("");$("rRank").value=RANKS.includes(r?.rank)?r.rank:"";$("rOffice").value=r?.office||"";$("rYear").value=r?.year||"";$("rEmail").value=r?.email||"";
   $("rDel").hidden=!r;$("rErr").hidden=true;openOv("ovRep");
 }
 $("addRep").onclick=()=>openRep(null);
 $("formRep").addEventListener("submit",async e=>{
   e.preventDefault();
-  const data={name:$("rName").value.trim(),surname:$("rSurname").value.trim(),rank:$("rRank").value.trim(),office:$("rOffice").value.trim(),year:$("rYear").value.trim()};
+  const data={name:$("rName").value.trim(),surname:$("rSurname").value.trim(),rank:$("rRank").value.trim(),office:$("rOffice").value.trim(),year:$("rYear").value.trim(),email:$("rEmail").value.trim()};
   if(!data.name||!data.surname){showErr("rErr","Συμπληρώστε όνομα και επώνυμο.");return}
   if(await save("reps",editingRep?.id||newId("r"),data)){closeOv($("formRep"));toast("Αποθηκεύτηκε")}
 });
@@ -696,14 +873,14 @@ function parseVisitLine(line){
 function parseRepLine(line){
   const parts=line.split(/\t|;|\|/).map(s=>s.trim());
   if(parts.length<2||!parts[0]||!parts[1])return null;
-  return {name:parts[0],surname:parts[1],rank:parts[2]||"",office:parts[3]||""};
+  return {name:parts[0],surname:parts[1],rank:parts[2]||"",office:parts[3]||"",email:parts[4]||""};
 }
 function openImport(mode){
   importMode=mode;$("impErr").hidden=true;$("impText").value="";
   if(mode==="visits"){$("impTitle").textContent="Επικόλληση λίστας επισκέψεων";
     $("impHint").textContent="Μία επίσκεψη ανά γραμμή, π.χ. «Σάββατο 17/10/2026 Σ.Σ. Διώνη Υπ' Αρ 32 Τεκτονικόν Μέγαρον Ιωαννίνων». Τα «Σ.Σ.» και «Υπ' Αρ» αφαιρούνται αυτόματα.";}
   else{$("impTitle").textContent="Επικόλληση πίνακα εκπροσώπων";
-    $("impHint").textContent="Μία γραμμή ανά πρόσωπο, στήλες: Όνομα · Επώνυμο · Βαθμός · Αξίωμα. Αντιγράψτε απευθείας από Excel/Word ή χωρίστε με ; .";}
+    $("impHint").textContent="Μία γραμμή ανά πρόσωπο, στήλες: Όνομα · Επώνυμο · Βαθμός · Αξίωμα · Email (προαιρετικό). Αντιγράψτε απευθείας από Excel/Word ή χωρίστε με ; .";}
   openOv("ovImport");
 }
 $("importVisits").onclick=()=>openImport("visits");$("importReps").onclick=()=>openImport("reps");
@@ -887,7 +1064,7 @@ async function remove(col,id){
   if(!db)persistLocal();
   render();return true;
 }
-function renderEditState(){["addVisit","importVisits","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
+function renderEditState(){["addVisit","importVisits","pubBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
 
 render();
 (async()=>{
