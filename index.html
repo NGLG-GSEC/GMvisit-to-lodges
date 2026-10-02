@@ -692,7 +692,7 @@ ${SIGN}`;
   openMail({title:"Ειδοποίηση Επαρχίας",to:$("nTo").value,subject:$("nSubj").value,body:$("nBody").value});
 };
 /* ---------- Members: the full roster, read-only reference ---------- */
-let rMemberId="",memberLimit=100;
+let rMemberId="",memberLimit=100,membersDenied=false;
 const memberStatus=m=>m.x?"Διαγραμμένο":"";
 const memberHay=m=>fold(`${m.s} ${m.f} ${(m.e||[]).join(" ")} ${(m.m||[]).join(" ")} ${(m.l||[]).map(l=>l.join(" ")).join(" ")} ${m.a||""}`);
 const repByMember=()=>{const o={};reps.forEach(r=>{if(r.memberId)o[r.memberId]=r});return o};
@@ -701,7 +701,7 @@ function renderMembers(){
   const lodSel=$("mlod"),cur=lodSel.value,names=new Map();
   members.forEach(m=>(m.l||[]).forEach(l=>{if(l[1]&&!names.has(l[1]))names.set(l[1],l[0])}));
   lodSel.innerHTML='<option value="">Όλες οι Στοές</option>'+[...names].sort((a,b)=>(parseInt(a[0])||1e5)-(parseInt(b[0])||1e5)).map(([n,nm])=>`<option value="${esc(n)}">${esc(n)} · ${esc(nm)}</option>`).join("");lodSel.value=names.has(cur)?cur:"";
-  if(!members.length){body.innerHTML=`<div class="empty">Δεν έχουν φορτωθεί ακόμη μέλη.</div>`;$("memberStats").innerHTML="";return}
+  if(!members.length){body.innerHTML=`<div class="empty">${membersDenied?"Τα στοιχεία των μελών είναι διαθέσιμα μόνο στους διαχειριστές.":"Δεν έχουν φορτωθεί ακόμη μέλη."}</div>`;$("memberStats").innerHTML="";return}
   const words=fold($("mq").value).split(/\s+/).filter(Boolean),st=$("ms").value,lod=lodSel.value,rbm=repByMember();
   const list=members.filter(m=>(!st||(st==="active"?!m.x:st==="x"?m.x:st==="noemail"?!(m.e||[]).length:!!rbm[m.id]))
     &&(!lod||(m.l||[]).some(l=>l[1]===lod))&&(!words.length||(h=>words.every(w=>h.includes(w)))(memberHay(m))))
@@ -1117,7 +1117,7 @@ async function remove(col,id){
   if(!db)persistLocal();
   render();return true;
 }
-function renderEditState(){["addVisit","importVisits","pubBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
+function renderEditState(){$("tab-members").hidden=!canWrite;if(!canWrite&&!$("view-members").hidden)showTab("visits");["addVisit","importVisits","pubBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
 
 render();
 (async()=>{
@@ -1149,7 +1149,9 @@ render();
   // Apply pending SEED.updates once the first snapshots of lodges, visits and settings/seed are in.
   const ready=new Set(),mark=k=>{ready.add(k);if(ready.size===3&&!mark.ran){mark.ran=true;applySeedUpdates(seedApplied).then(async added=>{
     if(added.length){try{await db.doc("settings/seed").set({applied:[...seedApplied,...added]})}catch(e){}}})}};
-  sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>reps=a);sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});sub("members",a=>members=a.sort((x,y)=>(x.n??0)-(y.n??0)).flatMap(d=>d.items||[]));
+  sub("visits",a=>{visits=a;mark("visits")});sub("reps",a=>reps=a);sub("provinces",a=>provinces=a);sub("lodges",a=>{lodges=a;mark("lodges")});// Members are readable by editors only: a refused read hides the tab instead of flagging a broken connection
+  db.collection("members").onSnapshot(s=>{membersDenied=false;members=s.docs.map(d=>d.data()).sort((x,y)=>(x.n??0)-(y.n??0)).flatMap(d=>d.items||[]);render()},
+    ()=>{membersDenied=true;members=[];$("tab-members").hidden=true;if(!$("view-members").hidden)showTab("visits");render()});
   db.doc("settings/rankmap").onSnapshot(d=>{rankMap=(d.exists&&d.data().map)||{};render()},()=>{});
   db.doc("settings/seed").onSnapshot(d=>{seedApplied=(d.exists&&d.data().applied)||[];mark("seed")},()=>{});
 })();
