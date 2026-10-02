@@ -19,15 +19,19 @@
   --display:"GFS Didot","Didot","Bodoni 72",Georgia,serif;
   --body:"Noto Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:10px;
+  /* province colours, fixed order (dataviz categorical slots 1-8) */
+  --p1:#2a78d6;--p2:#eb6834;--p3:#1baf7a;--p4:#eda100;--p5:#e87ba4;--p6:#008300;--p7:#4a3aa7;--p8:#e34948;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1422; --surface:#171e31; --ink:#e7ebf4; --muted:#9aa5bd; --line:#2a3350;
   --lapis:#8fa9ec; --lapis-soft:#1f2a48; --brass:#d9b865; --brass-soft:#2e2819;
-  --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark}}
+  --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark;
+  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;}}
 :root[data-theme="dark"]{
   --bg:#0f1422; --surface:#171e31; --ink:#e7ebf4; --muted:#9aa5bd; --line:#2a3350;
   --lapis:#8fa9ec; --lapis-soft:#1f2a48; --brass:#d9b865; --brass-soft:#2e2819;
-  --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark}
+  --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark;
+  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
 .wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:24px 64px}
@@ -60,6 +64,10 @@ label.chk input{width:auto}
 .list{display:grid;gap:8px}
 .visit{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,220px);gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
 .visit:hover{border-color:var(--lapis)}
+.visit[style*="--pc"]{border-left:5px solid var(--pc)}
+.visit[style*="--pc"]:hover{border-left-color:var(--pc)}
+.pdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc,var(--muted));margin-right:6px;vertical-align:-1px;flex:none}
+tr[style*="--pc"] td:first-child{box-shadow:inset 5px 0 0 var(--pc)}
 .visit.past{opacity:.6}
 .date{text-align:center;border-right:1px solid var(--line);padding-right:12px}
 .date .d{font-family:var(--display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
@@ -81,6 +89,7 @@ label.chk input{width:auto}
 .preview .sub{display:block;color:var(--muted);font-size:12px}
 .preview .nr{color:var(--warn);font-weight:600}
 .mail{font-size:12px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+.prov[style*="--pc"]{border-left:5px solid var(--pc)}
 .prov{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
 .addr{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:2px}
 .addr .em{font-weight:600;overflow-wrap:anywhere;user-select:all}
@@ -360,6 +369,9 @@ const lodgeByNo=n=>lodges.find(l=>String(l.number)===String(n).trim());
 const lodgeSortKey=l=>{const n=parseInt(l.number,10);return isNaN(n)?100000:n};
 const sortedLodges=()=>[...lodges].sort((a,b)=>lodgeSortKey(a)-lodgeSortKey(b)||String(a.number).localeCompare(String(b.number)));
 const provOptions=(cur,empty)=>`<option value="">${empty}</option>`+sortedProvs().map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("")+(cur&&!provByShort(cur)?`<option>${esc(cur)}</option>`:"");
+// Province colour follows the province (its place in the order), never the filtered list
+const provColor=short=>{const i=sortedProvs().findIndex(p=>p.short===short);return i>=0&&i<8?`var(--p${i+1})`:""};
+const pcStyle=short=>{const c=provColor(short);return c?` style="--pc:${c}"`:""};
 const sortedProvs=()=>[...provinces].sort((a,b)=>(a.order??99)-(b.order??99)||a.short.localeCompare(b.short,"el"));
 async function copyText(t,btn){
   try{await navigator.clipboard.writeText(t);toast("Αντιγράφηκε: "+t)}
@@ -436,12 +448,12 @@ function renderVisits(){
     const [y,m]=k.split("-").map(Number);
     return `<section class="month"><h2>${MONTHS[m-1]} ${y} <small>${items.length} ${items.length===1?"επίσκεψη":"επισκέψεις"}</small></h2><div class="list">${items.map(v=>{
       const d=parseISO(v.date),r=repById(v.repId);
-      return `<button class="visit${v.date<today?" past":""}" data-id="${esc(v.id)}">
+      return `<button class="visit${v.date<today?" past":""}" data-id="${esc(v.id)}"${pcStyle(v.province)}>
         <div class="date"><div class="d">${d.getDate()}</div><div class="w">${DAYS[d.getDay()].slice(0,3)}</div></div>
         <div style="min-width:0"><div class="lodge">${esc(v.lodge)}${v.number?`<span class="no">Αρ. ${esc(v.number)}</span>`:""}</div>
           <div class="meta">${DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()} · ${esc(v.location||"Τόπος —")}</div>
           ${v.notes?`<div class="note">${esc(v.notes)}</div>`:""}
-          ${v.province?`<span class="chip">${esc(v.province)}</span>${provByShort(v.province)?.email?`<div class="mail">${esc(provByShort(v.province).email)}</div>`:""}`:""}</div>
+          ${v.province?`<span class="chip"${pcStyle(v.province)}><span class="pdot"></span>${esc(v.province)}</span>${provByShort(v.province)?.email?`<div class="mail">${esc(provByShort(v.province).email)}</div>`:""}`:""}</div>
         <div class="rep">${r?`<div class="who">${esc(repLabel(r))}</div><div class="role">${esc(r.office||"")}</div>`:`<span class="pill-warn">Χωρίς εκπρόσωπο</span>`}</div>
       </button>`}).join("")}</div></section>`}).join("");
   box.querySelectorAll(".visit").forEach(b=>b.onclick=()=>openVisit(visits.find(v=>v.id===b.dataset.id)));
@@ -487,8 +499,8 @@ function renderLodges(){
     if(!x||!y)return (!x)-(!y);return sort==="asc"?x.localeCompare(y):y.localeCompare(x)});
   $("lodgeStats").innerHTML=`<span><b>${list.length}</b> από ${lodges.length} Στοές</span><span><b>${base.length-missing}</b> με ημερομηνία εγκατάστασης</span><span class="${missing?"warn":""}"><b>${missing}</b> χωρίς ημερομηνία εγκατάστασης</span>`;
   const fmt=d=>{const x=parseISO(d);return `${String(x.getDate()).padStart(2,"0")}/${String(x.getMonth()+1).padStart(2,"0")}/${x.getFullYear()}`};
-  body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αρ.</th><th>Στοά</th><th>Επαρχία</th><th>Επόμενη επίσκεψη</th><th></th></tr></thead><tbody>${list.map(l=>{const v=next[l.number];return `<tr>
-    <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}${l.location?`<div class="meta">${esc(l.location)}</div>`:""}</td><td class="meta">${esc(l.province||"—")}</td>
+  body.innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Αρ.</th><th>Στοά</th><th>Επαρχία</th><th>Επόμενη επίσκεψη</th><th></th></tr></thead><tbody>${list.map(l=>{const v=next[l.number];return `<tr${pcStyle(l.province)}>
+    <td class="num"><b>${esc(l.number)}</b></td><td>${esc(l.name)}${l.location?`<div class="meta">${esc(l.location)}</div>`:""}</td><td class="meta">${l.province?`<span class="pdot"></span>`:""}${esc(l.province||"—")}</td>
     <td>${v?`${fmt(v.date)}${repById(v.repId)?`<div class="meta">${esc(repLabel(repById(v.repId)))}</div>`:`<div><span class="pill-warn">Χωρίς εκπρόσωπο</span></div>`}`:`<span class="meta">—</span>`}</td>
     <td style="white-space:nowrap">${canWrite?`<button type="button" class="btn ghost sm" data-lv="${esc(l.id)}">+ Επίσκεψη</button> <button type="button" class="btn ghost sm" data-le="${esc(l.id)}">Επεξεργασία</button>`:""}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="empty">Καμία Στοά δεν ταιριάζει με την αναζήτηση.</div>`;
   body.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{openVisit(null);fillFromLodge(lodges.find(l=>l.id===b.dataset.lv))});
@@ -515,8 +527,8 @@ function renderProvs(){
   if(!provinces.length){body.innerHTML=`<div class="empty">Δεν υπάρχουν ακόμη Επαρχίες.</div>`;return}
   const counts={},lc={};visits.filter(v=>v.date>=todayISO()).forEach(v=>{if(v.province)counts[v.province]=(counts[v.province]||0)+1});
   lodges.forEach(l=>{if(l.province)lc[l.province]=(lc[l.province]||0)+1});
-  body.innerHTML=`<div class="list">${sortedProvs().map(p=>`<div class="prov">
-    <div style="min-width:0"><div class="lodge">${esc(p.short)}</div><div class="meta">${esc(p.full)}</div></div>
+  body.innerHTML=`<div class="list">${sortedProvs().map(p=>`<div class="prov"${pcStyle(p.short)}>
+    <div style="min-width:0"><div class="lodge"><span class="pdot"></span>${esc(p.short)}</div><div class="meta">${esc(p.full)}</div></div>
     <div style="min-width:0"><div class="eyebrow">${esc(p.title||"Γραμματεία")}</div><div class="addr"><span class="em">${esc(p.email)}</span> <button type="button" class="btn ghost sm" data-copy="${esc(p.email)}">Αντιγραφή</button></div>
       <div class="meta">${lc[p.short]||0} Στοές · ${counts[p.short]||0} προσεχείς επισκέψεις</div></div>
     <div><button type="button" class="btn ghost sm" data-prov="${esc(p.id)}" ${canWrite?"":"hidden"}>Επεξεργασία</button></div>
@@ -723,7 +735,7 @@ function renderReport(){
   $("repCount").textContent=rows.length?`${rows.length} επισκέψεις σε ${g.size} μήνες${unas?` · ${unas} χωρίς εκπρόσωπο`:""}.`:"Καμία επίσκεψη στο διάστημα αυτό.";
   $("repPdf").disabled=!rows.length;
   $("repPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος · Επαρχία</th><th>Εκπρόσωπος</th></tr></thead><tbody>${
-    [...g].map(([k,items])=>`<tr class="mrow"><td colspan="4">${monthTitle(k)} · ${items.length}</td></tr>`+items.map(v=>{const d=parseISO(v.date),r=repById(v.repId);return `<tr>
+    [...g].map(([k,items])=>`<tr class="mrow"><td colspan="4">${monthTitle(k)} · ${items.length}</td></tr>`+items.map(v=>{const d=parseISO(v.date),r=repById(v.repId);return `<tr${pcStyle(v.province)}>
       <td>${DAYS[d.getDay()]}<span class="sub">${fmtDate(v.date)}</span></td>
       <td><b>${esc(v.lodge)}</b>${v.number?` Αρ. ${esc(v.number)}`:""}${v.notes?`<span class="sub">${esc(v.notes)}</span>`:""}</td>
       <td>${esc(v.location||"—")}<span class="sub">${esc(v.province||"")}</span></td>
