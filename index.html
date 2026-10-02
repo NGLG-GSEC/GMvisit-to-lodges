@@ -595,6 +595,15 @@ const ritFamily=r=>!r?"":/^Σκωτικ/i.test(r)?"Σκωτικό":/^Emulation|�
 const ritPill=r=>r?`<span class="rit${ritFamily(r)==="Σκωτικό"?" sc":ritFamily(r)==="Emulation"?"":" sch"}">${esc(r)}</span>`:'<span class="meta">—</span>';
 const sortedLodges=()=>[...lodges].sort((a,b)=>lodgeSortKey(a)-lodgeSortKey(b)||String(a.number).localeCompare(String(b.number)));
 const provOptions=(cur,empty)=>`<option value="">${empty}</option>`+sortedProvs().map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("")+(cur&&!provByShort(cur)?`<option>${esc(cur)}</option>`:"");
+// Filter lists show, per province, active lodges with an upcoming installation date out of all its active lodges (e.g. «12/32»)
+function provDateCounts(){
+  const today=todayISO(),has=new Set(visits.filter(v=>v.date>=today).map(v=>String(v.number))),c={"":[0,0]};
+  lodges.filter(l=>!l.inactive).forEach(l=>{const k=l.province||"",d=has.has(String(l.number))?1:0;(c[k]||(c[k]=[0,0]));c[k][0]+=d;c[k][1]++;if(k){c[""][0]+=d;c[""][1]++}});
+  return c;
+}
+const provCountLabel=(c,k)=>c[k]?`  —  ${c[k][0]}/${c[k][1]}`:"";
+function provFilterOptions(list,empty){const c=provDateCounts();
+  return `<option value="">${esc(empty)}${provCountLabel(c,"")}</option>`+list.map(p=>`<option value="${esc(p)}">${esc(p)}${provCountLabel(c,p)}</option>`).join("")}
 // Province colour follows the province (its place in the order), never the filtered list
 const provColor=short=>{const i=sortedProvs().findIndex(p=>p.short===short);return i>=0&&i<8?`var(--p${i+1})`:""};
 const pcStyle=short=>{const c=provColor(short);return c?` style="--pc:${c}"`:""};
@@ -647,11 +656,11 @@ function renderFilters(){
   const provs=[...new Set([...sortedProvs().map(p=>p.short),...visits.map(v=>v.province).filter(Boolean)])];
   const locs=[...new Set([...lodges,...visits].map(x=>x.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"el"));
   const fp=$("fProv"),cur=fp.value;
-  fp.innerHTML='<option value="">Όλες οι Επαρχίες</option>'+provs.map(p=>`<option>${esc(p)}</option>`).join("");fp.value=provs.includes(cur)?cur:"";
+  fp.innerHTML=provFilterOptions(provs,"Όλες οι Επαρχίες");fp.value=provs.includes(cur)?cur:"";
   const fr=$("fRep");if(fr.value&&fr.value!=="__none"&&!repById(fr.value))fr.value="";
   if(document.activeElement!==$("fRepQ"))$("fRepQ").value=fRepLabel();
   $("lodgeList").innerHTML=sortedLodges().map(l=>`<option value="${esc(l.number)} · ${esc(l.name)}">${esc(l.province||"")}</option>`).join("");
-  const lp=$("lp"),curL=lp.value;lp.innerHTML=provOptions("","Όλες οι Επαρχίες");lp.value=curL;
+  const lp=$("lp"),curL=lp.value;lp.innerHTML=provFilterOptions(sortedProvs().map(p=>p.short),"Όλες οι Επαρχίες");lp.value=curL;
   $("locList").innerHTML=locs.map(p=>`<option value="${esc(p)}">`).join("");
 }
 function sortedReps(){return [...reps].sort((a,b)=>(a.surname||"").localeCompare(b.surname||"","el"))}
@@ -1037,7 +1046,7 @@ function masterRows(){
 }
 function renderMasters(){
   const body=$("mastersBody");if(!body)return;
-  const sp=$("sp"),cur=sp.value;sp.innerHTML=provOptions("","Όλες οι Επαρχίες");sp.value=cur;
+  const sp=$("sp"),cur=sp.value;sp.innerHTML=provFilterOptions(sortedProvs().map(p=>p.short),"Όλες οι Επαρχίες");sp.value=cur;
   const w=fold($("sq").value).split(/\s+/).filter(Boolean),miss=$("smiss").checked,all=masterRows();
   const list=all.filter(r=>(!sp.value||r.province===sp.value)&&(!miss||!r.m)&&(!w.length||w.every(x=>fold(`${r.lodge.number} ${r.lodge.name} ${r.m?.surname||""} ${r.m?.name||""}`).includes(x))));
   const scope=all.filter(r=>!sp.value||r.province===sp.value),known=scope.filter(r=>r.m).length;
@@ -1904,7 +1913,7 @@ function renderReport(){
 }
 function openReport(){
   if(!$("repFrom").value)$("repFrom").value=todayISO();
-  const cur=$("repProv").value;$("repProv").innerHTML=provOptions("","Όλες οι Επαρχίες");$("repProv").value=cur;
+  const cur=$("repProv").value;$("repProv").innerHTML=provFilterOptions(sortedProvs().map(p=>p.short),"Όλες οι Επαρχίες");$("repProv").value=cur;
   $("repErr").hidden=true;renderReport();openOv("ovReport");
 }
 ["repFrom","repTo","repProv"].forEach(id=>$(id).addEventListener("input",renderReport));
