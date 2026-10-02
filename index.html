@@ -1692,9 +1692,10 @@ $("gSend").onclick=async()=>{
 // «Αναφορά σε ΜΔ»: A4 list of the greetings sent today
 function greetTodayRows(){
   const t=todayISO();
-  return Object.entries(greetLog).filter(([,v])=>greetDay(v)===t).map(([k,v])=>{
-    const m=memberById(k.slice(0,k.lastIndexOf("_")));
-    return {name:v.name||(m?`${m.s} ${m.f}`:"—"),email:v.email||(m?greetMail(m):"")||"—",subject:v.subject||"—",at:v.at?new Date(v.at):null};
+  return Object.entries(greetLog).filter(([,v])=>greetDay(v)===t).map(([k,x])=>{
+    // Older entries are a bare date string (and a string has an .at method), so read fields only from objects
+    const v=x&&typeof x==="object"?x:{},m=memberById(k.slice(0,k.lastIndexOf("_")));
+    return {name:v.name||(m?`${m.s} ${m.f}`:"—"),email:v.email||(m?greetMail(m):"")||"—",subject:v.subject||"—",at:v.at&&!isNaN(new Date(v.at))?new Date(v.at):null};
   }).sort((a,b)=>(a.at||0)-(b.at||0)||a.name.localeCompare(b.name,"el"));
 }
 // Builds today's report; returns null (after showing why) when it cannot
@@ -1707,7 +1708,8 @@ function greetReportPdf(){
   doc.addFileToVFS("DV.ttf",PDF_FONTS.r);doc.addFont("DV.ttf","DV","normal");
   doc.addFileToVFS("DVB.ttf",PDF_FONTS.b);doc.addFont("DVB.ttf","DV","bold");
   const W=210,M=14,INK=[21,32,58],BRASS=[156,122,34],MUTED=[91,103,128];
-  const hm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  // 12-hour Greek time, e.g. «3:15 μ.μ.»
+  const hm=d=>`${d.getHours()%12||12}:${String(d.getMinutes()).padStart(2,"0")} ${d.getHours()<12?"π.μ.":"μ.μ."}`;
   doc.setFont("DV","normal");doc.setFontSize(9);doc.setTextColor(...BRASS);doc.text("ΕΘΝΙΚΗ ΜΕΓΑΛΗ ΣΤΟΑ ΤΗΣ ΕΛΛΑΔΟΣ",W/2,16,{align:"center"});
   doc.setFont("DV","bold");doc.setFontSize(16);doc.setTextColor(...INK);
   const title=doc.splitTextToSize(`Αναφορά αποστολής ευχών από ΜΔ σήμερα την ${dayStr(t)}`,W-2*M);doc.text(title,W/2,25,{align:"center"});
@@ -1717,7 +1719,7 @@ function greetReportPdf(){
   doc.setDrawColor(...BRASS);doc.setLineWidth(.5);doc.line(M,y+4,W-M,y+4);
   doc.autoTable({startY:y+9,margin:{left:M,right:M,top:18,bottom:16},theme:"grid",
     head:[["Α/Α","Ονοματεπώνυμο","Email","Θέμα email","Ημερομηνία & ώρα"]],
-    body:rows.map((r,i)=>[String(i+1),r.name,r.email,r.subject,r.at?`${fmtDate(t)}\n${hm(r.at)}`:fmtDate(t)]),
+    body:rows.map((r,i)=>[String(i+1),r.name,r.email,r.subject,r.at?`${fmtDate(t)}\n${hm(r.at)}`:`${fmtDate(t)}\n(χωρίς ώρα)`]),
     styles:{font:"DV",fontSize:12,textColor:INK,cellPadding:{top:2.4,bottom:2.4,left:1.8,right:1.8},lineColor:[210,214,224],lineWidth:.2,valign:"middle",overflow:"linebreak"},
     headStyles:{font:"DV",fontStyle:"bold",fillColor:INK,textColor:255,fontSize:12},
     columnStyles:{0:{cellWidth:12,halign:"center"},1:{cellWidth:48,fontSize:14,fontStyle:"bold"},2:{cellWidth:46},3:{cellWidth:43},4:{cellWidth:33,halign:"center"}},
