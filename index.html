@@ -20,18 +20,18 @@
   --body:"Noto Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --r:10px;
   /* province colours, fixed order (dataviz categorical slots 1-8) */
-  --p1:#2a78d6;--p2:#eb6834;--p3:#1baf7a;--p4:#eda100;--p5:#e87ba4;--p6:#008300;--p7:#4a3aa7;--p8:#e34948;
+  --p1:#2a78d6;--p2:#eb6834;--p3:#1baf7a;--p4:#eda100;--p5:#e87ba4;--p6:#008300;--p7:#4a3aa7;--p8:#e34948;--ok:#1d7a3e;--ok-soft:#e3f3e8;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1422; --surface:#171e31; --ink:#e7ebf4; --muted:#9aa5bd; --line:#2a3350;
   --lapis:#8fa9ec; --lapis-soft:#1f2a48; --brass:#d9b865; --brass-soft:#2e2819;
   --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark;
-  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;}}
+  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;--ok:#7fd99b;--ok-soft:#173322;}}
 :root[data-theme="dark"]{
   --bg:#0f1422; --surface:#171e31; --ink:#e7ebf4; --muted:#9aa5bd; --line:#2a3350;
   --lapis:#8fa9ec; --lapis-soft:#1f2a48; --brass:#d9b865; --brass-soft:#2e2819;
   --warn:#f0a56e; --warn-soft:#3a2517; --danger:#f2867e; color-scheme:dark;
-  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;}
+  --p1:#3987e5;--p2:#d95926;--p3:#199e70;--p4:#c98500;--p5:#d55181;--p6:#008300;--p7:#9085e9;--p8:#e66767;--ok:#7fd99b;--ok-soft:#173322;}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
 .wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:24px 64px}
@@ -66,6 +66,11 @@ label.chk input{width:auto}
 .list{display:grid;gap:8px}
 .visit{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,220px);gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
 .visit:hover{border-color:var(--lapis)}
+.visit:focus-visible{outline:2px solid var(--lapis);outline-offset:2px}
+.vact{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.okpill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.sample{white-space:pre-wrap;font:inherit;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:40vh;overflow:auto}
+#ovBulk{z-index:11}
 .visit[style*="--pc"]{border-left:5px solid var(--pc)}
 .visit[style*="--pc"]:hover{border-left-color:var(--pc)}
 .pdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc,var(--muted));margin-right:6px;vertical-align:-1px;flex:none}
@@ -174,6 +179,7 @@ tr.past td{opacity:.6}
       <select id="fProv"><option value="">Όλες οι Επαρχίες</option></select>
       <div class="combo combo-filter"><input id="fRepQ" type="search" placeholder="Όλοι οι εκπρόσωποι" aria-label="Φίλτρο εκπροσώπου" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="fRepList"><div class="combo-list" id="fRepList" role="listbox" hidden></div></div>
       <input type="hidden" id="fRep" value="">
+      <select id="fNotif" aria-label="Ενημέρωση"><option value="">Όλες οι ενημερώσεις</option><option value="rep">Εκπρόσωπος δεν ενημερώθηκε</option><option value="prov">Επαρχία δεν ενημερώθηκε</option></select>
       <label class="chk"><input type="checkbox" id="fPast"> Παλαιότερες</label>
     </div>
     <div class="toolbar">
@@ -380,6 +386,21 @@ tr.past td{opacity:.6}
   </div>
 </div>
 
+<div class="overlay" id="ovBulk" hidden>
+  <div class="panel wide">
+    <h3>Μαζική ενημέρωση εκπροσώπων</h3>
+    <p class="hint">Κάθε εκπρόσωπος λαμβάνει ένα email με όλες τις Εγκαταστάσεις του που δεν έχει ενημερωθεί, με συνημμένη πρόσκληση ημερολογίου. Ελέγξτε τη λίστα και το κείμενο («Προβολή») πριν την αποστολή.</p>
+    <div id="bulkList" class="list"></div>
+    <details style="margin-top:10px"><summary class="hint" style="cursor:pointer">Δείγμα κειμένου</summary><pre id="bulkSample" class="sample"></pre></details>
+    <div class="err" id="bulkErr" hidden></div>
+    <p class="hint" id="bulkStatus" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn primary" id="bulkSend">Αποστολή</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="ovNote" hidden>
   <form class="panel" id="formNote" novalidate>
     <h3 id="nTitle">Ειδοποίηση Επαρχίας</h3>
@@ -391,11 +412,13 @@ tr.past td{opacity:.6}
         <div class="actions" style="margin-top:6px"><button type="button" class="btn ghost sm" data-cp="nBody">Αντιγραφή κειμένου</button></div></div>
     </div>
     <p class="hint" id="nHow">Μπορείτε να διορθώσετε το κείμενο πριν την αποστολή. Πολλοί παραλήπτες: χωρίστε τα email με κόμμα.</p>
+    <p class="hint" id="nAttach" hidden></p>
     <div class="err" id="nErr" hidden></div>
     <p class="hint" id="nStatus" aria-live="polite"></p>
     <div class="actions">
       <a class="btn ghost left" id="nMailto" href="#" target="_blank" rel="noopener">Άνοιγμα στο πρόγραμμα email</a>
       <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn ghost" id="nMark" hidden title="Αν το στείλατε από το πρόγραμμα email σας">Σημείωση ως σταλμένο</button>
       <button type="button" class="btn" id="nDraft" hidden>Πρόχειρο στο Gmail</button>
       <button type="button" class="btn primary" id="nSend" hidden>Αποστολή μέσω Gmail</button>
     </div>
@@ -519,13 +542,15 @@ function renderFilters(){
 }
 function sortedReps(){return [...reps].sort((a,b)=>(a.surname||"").localeCompare(b.surname||"","el"))}
 function renderVisits(){
-  const q=$("q").value.trim().toLowerCase(),prov=$("fProv").value,rep=$("fRep").value,past=$("fPast").checked,today=todayISO();
+  const q=$("q").value.trim().toLowerCase(),prov=$("fProv").value,rep=$("fRep").value,past=$("fPast").checked,notif=$("fNotif").value,today=todayISO();
   const upcoming=visits.filter(v=>v.date>=today);
   const unassigned=upcoming.filter(v=>!v.repId||!repById(v.repId));
-  $("stats").innerHTML=`<span><b>${upcoming.length}</b> προσεχείς επισκέψεις</span><span class="${unassigned.length?"warn":""}"><b>${unassigned.length}</b> χωρίς εκπρόσωπο</span><span><b>${reps.length}</b> εκπρόσωποι</span>`;
+  const toBrief=upcoming.filter(v=>repById(v.repId)&&!repNotified(v)).length;
+  $("stats").innerHTML=`<span><b>${upcoming.length}</b> προσεχείς επισκέψεις</span><span class="${unassigned.length?"warn":""}"><b>${unassigned.length}</b> χωρίς εκπρόσωπο</span><span class="${toBrief?"warn":""}"><b>${toBrief}</b> εκπρόσωποι προς ενημέρωση</span><span><b>${reps.length}</b> εκπρόσωποι</span>`;
   let list=visits.filter(v=>(past||v.date>=today)
     &&(!prov||v.province===prov)
     &&(!rep||(rep==="__none"?(!v.repId||!repById(v.repId)):v.repId===rep))
+    &&(!notif||(notif==="rep"?(repById(v.repId)&&!repNotified(v)):!provNotified(v)))
     &&(!q||[v.lodge,v.number,v.location,v.province,repLabel(repById(v.repId))].join(" ").toLowerCase().includes(q)))
     .sort((a,b)=>a.date.localeCompare(b.date)||(Number(a.number)||0)-(Number(b.number)||0));
   const box=$("months");
@@ -537,15 +562,18 @@ function renderVisits(){
     const [y,m]=k.split("-").map(Number);
     return `<section class="month"><h2>${MONTHS[m-1]} ${y} <small>${items.length} ${items.length===1?"επίσκεψη":"επισκέψεις"}</small></h2><div class="list">${items.map(v=>{
       const d=parseISO(v.date),r=repById(v.repId);
-      return `<button class="visit${v.date<today?" past":""}" data-id="${esc(v.id)}"${pcStyle(v.province)}>
+      const rn=repNotified(v),pn=provNotified(v);
+      return `<div class="visit${v.date<today?" past":""}" role="button" tabindex="0" data-id="${esc(v.id)}"${pcStyle(v.province)}>
         <div class="date"><div class="d">${d.getDate()}</div><div class="w">${DAYS[d.getDay()].slice(0,3)}</div></div>
         <div style="min-width:0"><div class="lodge">${esc(v.lodge)}${v.number?`<span class="no">Αρ. ${esc(v.number)}</span>`:""}</div>
           <div class="meta">${DAYS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()} · ${esc(v.location||"Τόπος —")}</div>
+          ${r||pn?`<div class="vact">${r&&canWrite?`<button type="button" class="btn sm${rn?" ghost":" primary"}" data-brief="${esc(v.id)}">${rn?"↻ Ξανά αποστολή στον εκπρόσωπο":"✉ Ενημέρωση εκπροσώπου"}</button>`:""}${rn?`<span class="okpill">✓ Εκπρόσωπος ενημερώθηκε ${esc(fmtDate(rn.at))}</span>`:""}${pn?`<span class="okpill">✓ Επαρχία ενημερώθηκε ${esc(fmtDate(pn.at))}</span>`:""}</div>`:""}
           ${v.notes?`<div class="note">${esc(v.notes)}</div>`:""}
           ${v.province?`<span class="chip"${pcStyle(v.province)}><span class="pdot"></span>${esc(v.province)}</span>${provByShort(v.province)?.email?`<div class="mail">${esc(provByShort(v.province).email)}</div>`:""}`:""}</div>
         <div class="rep">${r?`<div class="who">${esc(repLabel(r))}</div><div class="role">${esc(r.office||"")}</div>`:`<span class="pill-warn">Χωρίς εκπρόσωπο</span>`}</div>
-      </button>`}).join("")}</div></section>`}).join("");
-  box.querySelectorAll(".visit").forEach(b=>b.onclick=()=>openVisit(visits.find(v=>v.id===b.dataset.id)));
+      </div>`}).join("")}</div></section>`}).join("");
+  box.querySelectorAll(".visit").forEach(b=>{const open=()=>openVisit(visits.find(v=>v.id===b.dataset.id));b.onclick=open;b.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&e.target===b){e.preventDefault();open()}}});
+  box.querySelectorAll("[data-brief]").forEach(b=>b.onclick=e=>{e.stopPropagation();const v=visits.find(x=>x.id===b.dataset.brief),r=repById(v?.repId);if(v&&r)repMail(r,[v])});
 }
 function renderReps(){
   const body=$("repsBody");
@@ -641,7 +669,7 @@ $("formProv").addEventListener("submit",async e=>{
     closeOv($("formProv"));toast("Αποθηκεύτηκε")}
 });
 $("pDel").onclick=()=>askConfirm(`Διαγραφή της ${editingProv.short};`,async()=>{if(await remove("provinces",editingProv.id)){$("ovProv").hidden=true;toast("Διαγράφηκε")}});
-["q","fProv","fRep","fPast"].forEach(id=>$(id).addEventListener("input",renderVisits));
+["q","fProv","fRep","fPast","fNotif"].forEach(id=>$(id).addEventListener("input",renderVisits));
 
 /* Visit form */
 function openVisit(v){
@@ -888,7 +916,11 @@ function updMailto(){$("nMailto").href=`mailto:${encodeURIComponent(mailTo().joi
 ["nTo","nSubj","nBody"].forEach(id=>$(id).addEventListener("input",()=>{updMailto();disarmSend()}));
 let sendTimer=0;
 function disarmSend(){clearTimeout(sendTimer);delete $("nSend").dataset.armed;$("nSend").textContent="Αποστολή μέσω Gmail"}
-function openMail({title,to,subject,body,hint}){
+let mailCtx={};
+function openMail({title,to,subject,body,hint,attach,onSent}){
+  mailCtx={attach,onSent};$("nMark").hidden=!onSent;
+  $("nAttach").hidden=!attach;$("nAttach").innerHTML=attach?`📎 Συνημμένο: <a href="#" id="nIcs">${esc(attach.filename)}</a> — ${esc(attach.label||"")}`:"";
+  if(attach)$("nIcs").onclick=e=>{e.preventDefault();saveFile(attach.filename,new Blob([attach.text],{type:attach.mimeType}),"nErr")};
   $("nTitle").textContent=title;$("nTo").value=to||"";$("nSubj").value=subject;$("nBody").value=body;
   $("nHint").textContent=hint||"";$("nHint").hidden=!hint;$("nErr").hidden=true;$("nStatus").textContent="";
   disarmSend();updMailto();openOv("ovNote");
@@ -913,9 +945,11 @@ async function gmail(tool){
   const sending=tool==="send_message";
   ["nSend","nDraft"].forEach(id=>$(id).disabled=true);$("nStatus").textContent=sending?"Αποστολή…":"Αποθήκευση πρόχειρου…";
   try{
-    const res=await m.callTool("Gmail",tool,{to,subject:$("nSubj").value,body:$("nBody").value});
+    const input={to,subject:$("nSubj").value,body:$("nBody").value};
+    if(mailCtx.attach)input.attachments=[{content:b64(mailCtx.attach.text),filename:mailCtx.attach.filename,mimeType:mailCtx.attach.mimeType}];
+    const res=await m.callTool("Gmail",tool,input);
     const t=new Date().toLocaleTimeString("el-GR",{hour:"2-digit",minute:"2-digit"});
-    if(sending){$("nStatus").textContent=`✓ Στάλθηκε στις ${t} προς ${to.join(", ")}.`;toast("Το email στάλθηκε")}
+    if(sending){$("nStatus").textContent=`✓ Στάλθηκε στις ${t} προς ${to.join(", ")}.`;toast("Το email στάλθηκε");if(mailCtx.onSent){await mailCtx.onSent();$("nMark").hidden=true}}
     else{const url=res?.payload?.viewUrl;$("nStatus").innerHTML=`✓ Αποθηκεύτηκε ως πρόχειρο στο Gmail (${t}).${url?` <a href="${esc(url)}" target="_blank" rel="noopener">Άνοιγμα πρόχειρου</a>`:""}`;toast("Αποθηκεύτηκε ως πρόχειρο")}
   }catch(e){
     $("nStatus").textContent="";
@@ -934,9 +968,30 @@ $("nSend").onclick=()=>{
   disarmSend();gmail("send_message");
 };
 $("nDraft").onclick=()=>gmail("create_draft");
+$("nMark").onclick=async()=>{if(mailCtx.onSent){await mailCtx.onSent();$("nMark").hidden=true;$("nStatus").textContent="✓ Σημειώθηκε ως σταλμένο.";toast("Σημειώθηκε")}};
+// Notification records on a visit stay valid only while its date (and representative) are unchanged
+const repNotified=v=>v?.repNotified&&v.repNotified.repId===(v.repId||"")&&v.repNotified.date===v.date?v.repNotified:null;
+const provNotified=v=>v?.provNotified&&v.provNotified.date===v.date&&(v.provNotified.repId||"")===(v.repId||"")?v.provNotified:null;
+async function markVisits(ids,field,repId){
+  for(const id of ids){const v=visits.find(x=>x.id===id);if(!v)continue;
+    await save("visits",v.id,{...strip(v),[field]:{at:todayISO(),date:v.date,repId:repId??(v.repId||"")}},true)}
+  render();if(!$("ovPub").hidden)renderPub();
+}
+const b64=s=>{const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=0x8000)x+=String.fromCharCode(...b.subarray(i,i+0x8000));return btoa(x)};
+// Calendar invitation: one all-day event per installation
+function icsFor(list){
+  const q=s=>String(s||"").replace(/[\\;,]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  const ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  const ev=list.map(v=>{const d=parseISO(v.date),n=parseISO(v.date);n.setDate(n.getDate()+1);
+    return ["BEGIN:VEVENT",`UID:${v.id||ymd(d)+"-"+(v.number||"x")}@nglg-lodge-visits`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${ymd(d)}`,`DTEND;VALUE=DATE:${ymd(n)}`,
+      `SUMMARY:${q(`Εγκατάσταση Σεβασμίου — ${lodgeRef(v)}`)}`,v.location?`LOCATION:${q(v.location)}`:"",
+      `DESCRIPTION:${q(`Εκπροσώπηση του Μεγάλου Διδασκάλου.${v.province?` ${provByShort(v.province)?.full||v.province}.`:""} Η ώρα έναρξης θα επιβεβαιωθεί από τη Στοά.`)}`,"END:VEVENT"].filter(Boolean).join("\r\n")});
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//NGLG//Lodge Visits//EL","CALSCALE:GREGORIAN","METHOD:PUBLISH",...ev,"END:VCALENDAR"].join("\r\n")+"\r\n";
+}
 
 // Representative briefing: one email for one representative's visits
-function repMail(r,list){
+function repMailContent(r,list){
   list=[...list].sort((a,b)=>a.date.localeCompare(b.date));
   const one=list.length===1,v=list[0];
   const item=v=>{const p=provByShort(v.province);return `${lodgeRef(v)}
@@ -954,16 +1009,58 @@ ${one?item(v):list.map((v,i)=>`${i+1}. ${item(v)}`).join("\n\n")}
 Σας ευχαριστούμε θερμά για την εκπροσώπηση.
 
 ${SIGN}`;
-  openMail({title:"Ενημέρωση Εκπροσώπου",to:r.email||"",
-    subject:one?`Ενημέρωση Εκπροσώπησης ΜΔ — Εγκατάσταση Σεβασμίου ${lodgeRef(v)} — ${dayStr(v.date)}`:"Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών",
-    body,hint:r.email?"":`Ο ${r.surname} ${r.name} δεν έχει email. Συμπληρώστε το παρακάτω ή προσθέστε το στην καρτέλα «Εκπρόσωποι».`});
+  return {list,subject:one?`Ενημέρωση Εκπροσώπησης ΜΔ — Εγκατάσταση Σεβασμίου ${lodgeRef(v)} — ${dayStr(v.date)}`:"Ενημέρωση Εκπροσώπησης ΜΔ στις Εγκαταστάσεις Σεβασμίων Σ. Στοών",body,
+    attach:{filename:one?`egkatastasi-${v.number||"stoa"}.ics`:"egkatastaseis.ics",mimeType:"text/calendar",text:icsFor(list),label:"πρόσκληση ημερολογίου"}};
+}
+function repMail(r,list){
+  const c=repMailContent(r,list),ids=c.list.map(v=>v.id).filter(Boolean);
+  openMail({title:"Ενημέρωση Εκπροσώπου",to:r.email||"",subject:c.subject,body:c.body,attach:c.attach,
+    onSent:ids.length?()=>markVisits(ids,"repNotified",r.id):null,
+    hint:r.email?"":`Ο ${r.surname} ${r.name} δεν έχει email. Συμπληρώστε το παρακάτω ή προσθέστε το στην καρτέλα «Εκπρόσωποι».`});
 }
 $("vRepMail").onclick=()=>{
   const r=reps.find(r=>repOpt(r)===$("vRep").value.trim()),date=$("vDate").value,lodge=clean($("vLodge").value);
   if(!date||!lodge){showErr("vErr","Συμπληρώστε πρώτα ημερομηνία και Στοά.");return}
   if(!r){showErr("vErr","Επιλέξτε πρώτα εκπρόσωπο από τη λίστα αναζήτησης.");return}
   $("vErr").hidden=true;
-  repMail(r,[{date,lodge,number:$("vNo").value.trim(),location:$("vLoc").value.trim(),province:$("vProv").value}]);
+  repMail(r,[{id:editingVisit?.id,date,lodge,number:$("vNo").value.trim(),location:$("vLoc").value.trim(),province:$("vProv").value}]);
+};
+
+// Bulk briefing: one email per representative, sent one after another after a confirming second click
+let bulkItems=[],bulkTimer=0;
+function bulkDisarm(){clearTimeout(bulkTimer);delete $("bulkSend").dataset.armed;const n=bulkItems.filter(b=>b.on&&!b.done).length;$("bulkSend").textContent=`Αποστολή σε ${n} ${n===1?"εκπρόσωπο":"εκπροσώπους"}`;$("bulkSend").disabled=!n}
+function renderBulk(){
+  $("bulkList").innerHTML=bulkItems.map((b,i)=>`<div class="reprow"><label class="chk" style="color:var(--ink);white-space:normal"><input type="checkbox" data-bi="${i}" ${b.on?"checked":""} ${b.ok&&!b.done?"":"disabled"}> <span><b>${esc(b.r.surname)} ${esc(b.r.name)}</b> <span class="meta">· ${b.vs.length} ${b.vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${b.ok?esc(b.r.email):"χωρίς έγκυρο email"}</span></span></label>
+    <span>${b.done?'<span class="okpill">✓ Στάλθηκε</span>':b.err?`<span class="pill-warn">${esc(b.err)}</span>`:""} <button type="button" class="btn ghost sm" data-bv="${i}">Προβολή</button></span></div>`).join("");
+  $("bulkList").querySelectorAll("[data-bi]").forEach(c=>c.onchange=()=>{bulkItems[c.dataset.bi].on=c.checked;bulkDisarm()});
+  $("bulkList").querySelectorAll("[data-bv]").forEach(c=>c.onclick=()=>{const b=bulkItems[c.dataset.bv];repMail(b.r,b.vs)});
+  const s=bulkItems.find(b=>b.ok)||bulkItems[0];$("bulkSample").textContent=s?(c=>`Θέμα: ${c.subject}\n\n${c.body}`)(repMailContent(s.r,s.vs)):"";
+  bulkDisarm();
+}
+function openBulk(groups){
+  bulkItems=groups.map(([r,vs])=>{const ok=EMAIL_RE.test(r.email||"");return {r,vs,ok,on:ok,done:false,err:""}});
+  $("bulkErr").hidden=true;$("bulkStatus").textContent="";renderBulk();openOv("ovBulk");
+  getMcp().then(m=>{if(!m){$("bulkSend").disabled=true;showErr("bulkErr","Η μαζική αποστολή γίνεται μέσω Gmail και δεν είναι διαθέσιμη εδώ. Στείλτε από «Προβολή» για κάθε εκπρόσωπο.")}});
+}
+$("bulkSend").onclick=async()=>{
+  const todo=bulkItems.filter(b=>b.on&&!b.done);if(!todo.length)return;
+  if(!$("bulkSend").dataset.armed){$("bulkSend").dataset.armed="1";$("bulkSend").textContent=`Επιβεβαίωση: αποστολή ${todo.length} email`;clearTimeout(bulkTimer);bulkTimer=setTimeout(bulkDisarm,6000);return}
+  clearTimeout(bulkTimer);delete $("bulkSend").dataset.armed;$("bulkSend").disabled=true;$("bulkErr").hidden=true;
+  const m=await getMcp();if(!m){showErr("bulkErr","Η αποστολή μέσω Gmail δεν είναι διαθέσιμη εδώ.");return}
+  let sent=0;
+  for(const b of todo){
+    $("bulkStatus").textContent=`Αποστολή ${sent+1} από ${todo.length}: ${b.r.surname} ${b.r.name}…`;
+    const c=repMailContent(b.r,b.vs);
+    try{
+      await m.callTool("Gmail","send_message",{to:[b.r.email],subject:c.subject,body:c.body,attachments:[{content:b64(c.attach.text),filename:c.attach.filename,mimeType:c.attach.mimeType}]});
+      b.done=true;b.err="";sent++;await markVisits(c.list.map(v=>v.id).filter(Boolean),"repNotified",b.r.id);
+    }catch(e){
+      b.err=e?.code==="tool_error"?"Απορρίφθηκε":"Δεν στάλθηκε";renderBulk();
+      if(e?.code!=="tool_error"){showErr("bulkErr",(GMAIL_ERR[e?.code]||"Η αποστολή διακόπηκε. Για τον τελευταίο εκπρόσωπο ελέγξτε τα «Απεσταλμένα» στο Gmail πριν το στείλετε ξανά.")+` Στάλθηκαν ${sent} από ${todo.length}.`);break}
+    }
+    renderBulk();
+  }
+  $("bulkStatus").textContent=`✓ Στάλθηκαν ${sent} από ${todo.length} email.`;toast(`Στάλθηκαν ${sent} email`);renderBulk();
 };
 
 // Publish: the province's installations in a date range, with their representatives
@@ -981,9 +1078,11 @@ function renderPub(){
   $("pubMail").textContent=p?.email?`Προς: ${p.title||"Γραμματεία"} — ${p.email}`:"Η Επαρχία δεν έχει email Γραμματείας (καρτέλα «Επαρχίες»).";
   const unas=rows.filter(v=>!repById(v.repId)).length;
   $("pubCount").textContent=`${rows.length} ${rows.length===1?"Εγκατάσταση":"Εγκαταστάσεις"}${unas?` · ${unas} χωρίς εκπρόσωπο`:""} · ${miss.length} Στοές χωρίς ημερομηνία`;
-  $("pubPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος</th><th>Εκπρόσωπος ΜΔ</th></tr></thead><tbody>${rows.map(v=>{const r=repById(v.repId);return `<tr${pcStyle(v.province)}><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td><td>${esc(v.location||"—")}</td><td>${r?esc(repFull(r)):`<span class="nr">Δεν έχει οριστεί</span>`}</td></tr>`}).join("")}</tbody></table>`:`<div class="empty" style="margin:0">Δεν υπάρχουν Εγκαταστάσεις σε αυτό το διάστημα.</div>`;
+  $("pubPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος</th><th>Εκπρόσωπος ΜΔ</th></tr></thead><tbody>${rows.map(v=>{const r=repById(v.repId);return `<tr${pcStyle(v.province)}><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td><td>${esc(v.location||"—")}</td><td>${r?esc(repFull(r)):`<span class="nr">Δεν έχει οριστεί</span>`}${repNotified(v)?' <span class="okpill">✓ ενημ.</span>':""}${provNotified(v)?' <span class="okpill">✓ Επαρχία</span>':""}</td></tr>`}).join("")}</tbody></table>`:`<div class="empty" style="margin:0">Δεν υπάρχουν Εγκαταστάσεις σε αυτό το διάστημα.</div>`;
   const byRep=new Map();rows.forEach(v=>{const r=repById(v.repId);if(r){if(!byRep.has(r.id))byRep.set(r.id,[]);byRep.get(r.id).push(v)}});
-  $("pubReps").innerHTML=byRep.size?[...byRep].map(([id,vs])=>{const r=repById(id);return `<div class="reprow"><div style="min-width:0"><b>${esc(r.surname)} ${esc(r.name)}</b> <span class="meta">· ${vs.length} ${vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${r.email?esc(r.email):"χωρίς email"}${r.mobile?` · ${esc(r.mobile)}`:""}</span></div><button type="button" class="btn ghost sm" data-repmail="${esc(id)}">Email εκπροσώπου</button></div>`}).join(""):`<p class="hint">Δεν έχουν οριστεί ακόμη εκπρόσωποι σε αυτές τις Εγκαταστάσεις.</p>`;
+  const pending=[...byRep].filter(([,vs])=>vs.some(v=>!repNotified(v)));
+  $("pubReps").innerHTML=byRep.size?(pending.length?`<div class="toolbar" style="margin:4px 0 8px"><button type="button" class="btn primary sm" id="pubBulk">Μαζική ενημέρωση εκπροσώπων (${pending.length})</button></div>`:`<p class="hint">✓ Όλοι οι εκπρόσωποι έχουν ενημερωθεί.</p>`)+[...byRep].map(([id,vs])=>{const r=repById(id),done=vs.every(v=>repNotified(v));return `<div class="reprow"><div style="min-width:0"><b>${esc(r.surname)} ${esc(r.name)}</b> <span class="meta">· ${vs.length} ${vs.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} · ${r.email?esc(r.email):"χωρίς email"}${r.mobile?` · ${esc(r.mobile)}`:""}</span>${done?' <span class="okpill">✓ ενημερώθηκε</span>':""}</div><button type="button" class="btn ghost sm" data-repmail="${esc(id)}">${done?"Ξανά αποστολή":"Email εκπροσώπου"}</button></div>`}).join(""):`<p class="hint">Δεν έχουν οριστεί ακόμη εκπρόσωποι σε αυτές τις Εγκαταστάσεις.</p>`;
+  if($("pubBulk"))$("pubBulk").onclick=()=>openBulk(pending.map(([id,vs])=>[repById(id),vs.filter(v=>!repNotified(v))]));
   $("pubReps").querySelectorAll("[data-repmail]").forEach(b=>b.onclick=()=>repMail(repById(b.dataset.repmail),byRep.get(b.dataset.repmail)));
   $("pubErr").hidden=true;
 }
@@ -1015,6 +1114,7 @@ $("pubCompose").onclick=()=>{
   const p=provByShort($("pubProv").value),rows=pubRows(),miss=$("pubMissing").checked?pubMissing():[];
   if(!rows.length&&!miss.length){showErr("pubErr","Δεν υπάρχουν Εγκαταστάσεις για αποστολή σε αυτό το διάστημα.");return}
   openMail({title:"Publish — Ενημέρωση Επαρχίας",to:p?.email||"",subject:PUB_SUBJECT,body:provinceMailBody(p,rows,miss),
+    onSent:rows.length?()=>markVisits(rows.map(v=>v.id),"provNotified"):null,
     hint:p?.email?"":"Η Επαρχία δεν έχει email Γραμματείας — συμπληρώστε το παρακάτω."});
 };
 document.querySelectorAll("[data-cp]").forEach(b=>b.addEventListener("click",async()=>{
@@ -1027,6 +1127,7 @@ $("formVisit").addEventListener("submit",async e=>{
   const rv=$("vRep").value.trim();
   if(rv){const r=reps.find(r=>repOpt(r)===rv);if(!r){showErr("vErr","Επιλέξτε εκπρόσωπο από τη λίστα αναζήτησης (πληκτρολογήστε όνομα ή επώνυμο).");return}data.repId=r.id}
   const id=editingVisit?.id||newId("v");
+  ["repNotified","provNotified"].forEach(k=>{if(editingVisit?.[k])data[k]=editingVisit[k]});
   if(await save("visits",id,data)){closeOv($("formVisit"));toast("Αποθηκεύτηκε")}
 });
 $("vDel").onclick=()=>askConfirm(`Διαγραφή της επίσκεψης στη Στοά «${editingVisit.lodge}»;`,async()=>{if(await remove("visits",editingVisit.id)){$("ovVisit").hidden=true;toast("Διαγράφηκε")}});
