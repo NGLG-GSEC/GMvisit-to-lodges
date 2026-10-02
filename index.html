@@ -769,7 +769,7 @@ function loadLocal(){
   lodges=d?.lodges||seed.lodges||[];rankMap=d?.rankMap||{};seedApplied=d?.seedApplied||[];
   if(!d)persistLocal();
 }
-// Merges SEED.updates not yet applied: new lodges, lodge locations (only where empty)
+// Merges SEED.updates not yet applied: new lodges, lodge locations (only where empty), lodgeChanges
 // and visits (skipped if the same id or the same lodge & date already exists).
 // Returns the ids of the updates that were fully applied.
 async function applySeedUpdates(done){
@@ -779,6 +779,14 @@ async function applySeedUpdates(done){
     let good=true;
     for(const l of u.lodges||[])if(!lodgeByNo(l.number))good=await save("lodges",l.id,strip(l),true)&&good;
     for(const [no,loc] of Object.entries(u.lodgeLocations||{})){const l=lodgeByNo(no);if(l&&!l.location)good=await save("lodges",l.id,{...strip(l),location:loc},true)&&good}
+    // lodgeChanges overwrite; upcoming visits of the lodge follow unless edited by hand
+    for(const [no,ch] of Object.entries(u.lodgeChanges||{})){const l=lodgeByNo(no);if(!l)continue;
+      good=await save("lodges",l.id,{...strip(l),...ch},true)&&good;
+      for(const v of visits.filter(v=>String(v.number)===no&&v.date>=todayISO())){
+        const nv={...strip(v)};
+        if(ch.name&&v.lodge===l.name)nv.lodge=ch.name;
+        if(ch.location&&(!v.location||v.location===l.location))nv.location=ch.location;
+        if(nv.lodge!==v.lodge||nv.location!==v.location)good=await save("visits",v.id,nv,true)&&good}}
     for(const v of u.visits||[])if(!visits.some(x=>x.id===v.id||(String(x.number)===v.number&&x.date===v.date)))good=await save("visits",v.id,strip(v),true)&&good;
     if(good)ok.push(u.id);
   }
