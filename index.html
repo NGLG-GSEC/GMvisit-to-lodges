@@ -496,7 +496,8 @@ tr.past td{opacity:.6}
       <div class="field full"><label for="gSubj">Θέμα</label><input id="gSubj"></div>
       <div class="field full"><label for="gBody">Κείμενο</label><textarea id="gBody" style="min-height:200px"></textarea>
         <div class="actions" style="margin-top:6px;justify-content:flex-start"><button type="button" class="btn ghost sm" id="gReset">Επαναφορά προτύπου</button>
-          <label class="chk"><input type="checkbox" id="gCrest" checked> Επισύναψη θυρεού</label></div></div>
+          <label class="chk"><input type="checkbox" id="gCrest" checked> Επισύναψη θυρεού</label>
+          <label class="chk"><input type="checkbox" id="gBcc" checked> Κρυφή κοινοποίηση στη Γραμματεία και στον ΕπΜΔ της Επαρχίας</label></div></div>
     </div>
     <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Δείγμα όπως θα φτάσει</summary><div id="gSample" class="sample" style="white-space:normal;background:#fff;color:#1b1f2a"></div></details>
     <h4 style="margin:14px 0 4px" id="gCount"></h4>
@@ -516,6 +517,7 @@ tr.past td{opacity:.6}
     <p class="hint" id="nHint" hidden></p>
     <div class="grid">
       <div class="field full"><label for="nTo">Προς</label><div class="addr"><input id="nTo" style="flex:1 1 200px;min-width:0"><button type="button" class="btn ghost sm" data-cp="nTo">Αντιγραφή</button></div></div>
+      <div class="field full"><label for="nBcc">Κρυφή κοινοποίηση (Bcc)</label><div class="addr"><input id="nBcc" style="flex:1 1 200px;min-width:0" placeholder="προαιρετικό"><button type="button" class="btn ghost sm" data-cp="nBcc">Αντιγραφή</button></div></div>
       <div class="field full"><label for="nSubj">Θέμα</label><div class="addr"><input id="nSubj" style="flex:1 1 200px;min-width:0"><button type="button" class="btn ghost sm" data-cp="nSubj">Αντιγραφή</button></div></div>
       <div class="field full"><label for="nBody">Κείμενο</label><textarea id="nBody" style="min-height:220px"></textarea>
         <div class="actions" style="margin-top:6px"><button type="button" class="btn ghost sm" data-cp="nBody">Αντιγραφή κειμένου</button></div></div>
@@ -1133,6 +1135,14 @@ let ndVisible=[];
 const greetKey=(m,date)=>`${m.id}_${date}`;
 // greetings/log values: {d,at,name,email,subject} (older entries are just the date)
 const greetDay=v=>typeof v==="string"?v:v?.d||"";
+// Bcc for a celebrant: secretariat email and Provincial Grand Master of each province his (non-struck-off) lodges belong to
+function greetBcc(m,self){
+  const out=new Set();
+  (m.l||[]).filter(l=>!/ΔΙΑΓΡΑΦ/.test(l[2]||"")).forEach(l=>{const p=provByShort(lodgeByNo(l[1])?.province||"");if(!p)return;
+    if(EMAIL_RE.test(p.email||""))out.add(p.email);
+    const gm=p.gmMemberId?memberById(p.gmMemberId):null,ge=gm?greetMail(gm):"";if(ge)out.add(ge)});
+  const own=fold(self||"");return [...out].filter(e=>fold(e)!==own);
+}
 const greetMail=m=>(m.e||[]).find(x=>EMAIL_RE.test(x))||"";
 const ndPicked=()=>ndVisible.filter(v=>ndSel.has(v.k));
 ["ndFrom","ndTo","ndMail","ndHideSent"].forEach(id=>$(id).addEventListener("input",renderNamedays));
@@ -1462,16 +1472,17 @@ const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 let mcpNs;
 async function getMcp(){if(mcpNs===undefined){try{mcpNs=window.claude?await window.claude.use("mcp"):null}catch(e){mcpNs=null}}return mcpNs}
 function mailTo(){return $("nTo").value.split(/[\s,;]+/).filter(Boolean)}
-function updMailto(){$("nMailto").href=`mailto:${encodeURIComponent(mailTo().join(","))}?subject=${encodeURIComponent($("nSubj").value)}&body=${encodeURIComponent($("nBody").value)}`}
-["nTo","nSubj","nBody"].forEach(id=>$(id).addEventListener("input",()=>{updMailto();disarmSend()}));
+function mailBcc(){return $("nBcc").value.split(/[\s,;]+/).filter(Boolean)}
+function updMailto(){$("nMailto").href=`mailto:${encodeURIComponent(mailTo().join(","))}?${mailBcc().length?`bcc=${encodeURIComponent(mailBcc().join(","))}&`:""}subject=${encodeURIComponent($("nSubj").value)}&body=${encodeURIComponent($("nBody").value)}`}
+["nTo","nBcc","nSubj","nBody"].forEach(id=>$(id).addEventListener("input",()=>{updMailto();disarmSend()}));
 let sendTimer=0;
 function disarmSend(){clearTimeout(sendTimer);delete $("nSend").dataset.armed;$("nSend").textContent="Αποστολή μέσω Gmail"}
 let mailCtx={};
-function openMail({title,to,subject,body,hint,attach,onSent,toHtml}){
+function openMail({title,to,bcc,subject,body,hint,attach,onSent,toHtml}){
   mailCtx={attach,onSent,toHtml};$("nMark").hidden=!onSent;
   $("nAttach").hidden=!attach;$("nAttach").innerHTML=attach?`📎 Συνημμένο: <a href="#" id="nIcs">${esc(attach.filename)}</a> — ${esc(attach.label||"")}`:"";
   if(attach)$("nIcs").onclick=e=>{e.preventDefault();saveFile(attach.filename,new Blob([attach.b64?Uint8Array.from(atob(attach.b64),c=>c.charCodeAt(0)):attach.text],{type:attach.mimeType}),"nErr")};
-  $("nTitle").textContent=title;$("nTo").value=to||"";$("nSubj").value=subject;$("nBody").value=body;
+  $("nTitle").textContent=title;$("nTo").value=to||"";$("nBcc").value=(bcc||[]).join(", ");$("nSubj").value=subject;$("nBody").value=body;
   $("nHint").textContent=hint||"";$("nHint").hidden=!hint;$("nErr").hidden=true;$("nStatus").textContent="";
   disarmSend();updMailto();openOv("ovNote");
   getMcp().then(m=>{$("nSend").hidden=$("nDraft").hidden=!m});
@@ -1487,7 +1498,7 @@ const GMAIL_ERR={
   approval_required:"Ο οργανισμός σας απαιτεί έγκριση για αποστολή μέσω Gmail από αυτή τη σελίδα."
 };
 async function gmail(tool){
-  const to=mailTo(),bad=to.filter(x=>!EMAIL_RE.test(x));
+  const to=mailTo(),bcc=mailBcc(),bad=[...to,...bcc].filter(x=>!EMAIL_RE.test(x));
   if(!to.length){showErr("nErr","Συμπληρώστε το email του παραλήπτη.");return}
   if(bad.length){showErr("nErr","Μη έγκυρο email: "+bad.join(", "));return}
   $("nErr").hidden=true;
@@ -1495,7 +1506,7 @@ async function gmail(tool){
   const sending=tool==="send_message";
   ["nSend","nDraft"].forEach(id=>$(id).disabled=true);$("nStatus").textContent=sending?"Αποστολή…":"Αποθήκευση πρόχειρου…";
   try{
-    const input={to,subject:$("nSubj").value,body:$("nBody").value};
+    const input={to,subject:$("nSubj").value,body:$("nBody").value};if(bcc.length)input.bcc=bcc;
     if(mailCtx.toHtml){const h=mailCtx.toHtml(input.body);input.htmlBody=h.html;input.body=h.text}
     if(mailCtx.attach)input.attachments=[{content:mailCtx.attach.b64||b64(mailCtx.attach.text),filename:mailCtx.attach.filename,mimeType:mailCtx.attach.mimeType}];
     const res=await m.callTool("Gmail",tool,input);
@@ -1514,7 +1525,7 @@ $("nSend").onclick=()=>{
   const to=mailTo();
   if(!$("nSend").dataset.armed){
     if(!to.length){showErr("nErr","Συμπληρώστε το email του παραλήπτη.");return}
-    $("nSend").dataset.armed="1";$("nSend").textContent=`Επιβεβαίωση: αποστολή προς ${to.join(", ")}`;
+    $("nSend").dataset.armed="1";$("nSend").textContent=`Επιβεβαίωση: αποστολή προς ${to.join(", ")}${mailBcc().length?` (+${mailBcc().length} κρυφή κοιν.)`:""}`;
     clearTimeout(sendTimer);sendTimer=setTimeout(disarmSend,6000);return}
   disarmSend();gmail("send_message");
 };
@@ -1644,7 +1655,7 @@ function greetFill(t,it){return t.replace(/\{Προσφώνηση\}/g,GREET_VOC[
 const greetContent=it=>({subject:greetFill($("gSubj").value,it),body:greetFill($("gBody").value,it)});
 function greetSaveTpl(){try{localStorage.setItem(GREET_TPL,JSON.stringify({s:$("gSubj").value,b:$("gBody").value}))}catch(e){}}
 async function markGreet(it,info={}){
-  const rec={d:todayISO(),at:new Date().toISOString(),name:`${it.m.s} ${it.m.f}`,email:info.email||it.email||"",subject:info.subject||""};
+  const rec={d:todayISO(),at:new Date().toISOString(),name:`${it.m.s} ${it.m.f}`,email:info.email||it.email||"",subject:info.subject||""};if(info.bcc?.length)rec.bcc=info.bcc;
   greetLog={...greetLog,[it.k]:rec};ndSel.delete(it.k);
   if(db){const ref=db.doc("greetings/log");try{await ref.update({[it.k]:rec})}catch(e){try{await ref.set({...greetLog})}catch(e2){toast("Η καταγραφή των ευχών απέτυχε")}}}
   else{try{localStorage.setItem("lvr-greet",JSON.stringify(greetLog))}catch(e){}}
@@ -1653,12 +1664,12 @@ async function markGreet(it,info={}){
 function greetDisarm(){clearTimeout(greetTimer);delete $("gSend").dataset.armed;const n=greetItems.filter(g=>g.on&&!g.done).length;$("gSend").textContent=`Αποστολή σε ${n} ${n===1?"εορτάζοντα":"εορτάζοντες"}`;$("gSend").disabled=!n}
 function renderGreet(){
   const n=greetItems.filter(g=>g.on).length;$("gCount").textContent=`Παραλήπτες: ${n} από ${greetItems.length}`;
-  $("gList").innerHTML=greetItems.map((g,i)=>`<div class="reprow"><label class="chk" style="color:var(--ink);white-space:normal"><input type="checkbox" data-gi="${i}" ${g.on?"checked":""} ${g.done?"disabled":""}> <span><b>${esc(g.m.s)} ${esc(g.m.f)}</b> <span class="meta">· ${esc(g.label)} ${esc(fmtDate(g.date))} · ${esc(g.email)}</span>${greetLog[g.k]&&!g.done?` <span class="pill-warn">έλαβε ήδη ευχές ${esc(fmtDate(greetDay(greetLog[g.k])))}</span>`:""}</span></label>
+  $("gList").innerHTML=greetItems.map((g,i)=>`<div class="reprow"><label class="chk" style="color:var(--ink);white-space:normal"><input type="checkbox" data-gi="${i}" ${g.on?"checked":""} ${g.done?"disabled":""}> <span><b>${esc(g.m.s)} ${esc(g.m.f)}</b> <span class="meta">· ${esc(g.label)} ${esc(fmtDate(g.date))} · ${esc(g.email)}</span>${$("gBcc").checked?`<span class="meta" style="display:block">Κρυφή κοιν.: ${g.bcc.length?esc(g.bcc.join(", ")):"— (δεν βρέθηκε Επαρχία)"}</span>`:""}${greetLog[g.k]&&!g.done?` <span class="pill-warn">έλαβε ήδη ευχές ${esc(fmtDate(greetDay(greetLog[g.k])))}</span>`:""}</span></label>
     <span>${g.done?'<span class="okpill">✓ Στάλθηκε</span>':g.err?`<span class="pill-warn">${esc(g.err)}</span>`:""} <select data-gr="${i}" aria-label="Προσφώνηση" style="width:auto;padding:4px 6px" ${g.done?"disabled":""}>${GREET_RK.map((x,k)=>`<option value="${k-1}" ${g.rk===k-1?"selected":""}>${x}</option>`).join("")}</select> <button type="button" class="btn ghost sm" data-gv="${i}">Προβολή</button></span></div>`).join("");
   $("gList").querySelectorAll("[data-gr]").forEach(c=>c.onchange=()=>{greetItems[c.dataset.gr].rk=+c.value;renderGreet()});
   $("gList").querySelectorAll("[data-gi]").forEach(c=>c.onchange=()=>{greetItems[c.dataset.gi].on=c.checked;renderGreet()});
   $("gList").querySelectorAll("[data-gv]").forEach(c=>c.onclick=()=>{const g=greetItems[c.dataset.gv],x=greetContent(g);
-    openMail({title:"Ευχές ονομαστικής εορτής",to:g.email,subject:x.subject,body:x.body,hint:`${g.m.s} ${g.m.f} · ${g.label}, ${dayStr(g.date)} · με επικεφαλίδα «${GREET_HEAD}»`,toHtml:greetMailParts,attach:$("gCrest").checked?CREST:null,onSent:async()=>{g.done=true;await markGreet(g,{email:mailTo()[0],subject:$("nSubj").value});renderGreet()}})});
+    openMail({title:"Ευχές ονομαστικής εορτής",to:g.email,bcc:$("gBcc").checked?g.bcc:[],subject:x.subject,body:x.body,hint:`${g.m.s} ${g.m.f} · ${g.label}, ${dayStr(g.date)} · με επικεφαλίδα «${GREET_HEAD}»`,toHtml:greetMailParts,attach:$("gCrest").checked?CREST:null,onSent:async()=>{g.done=true;await markGreet(g,{email:mailTo()[0],subject:$("nSubj").value,bcc:mailBcc()});renderGreet()}})});
   const s=greetItems.find(g=>!g.done)||greetItems[0];
   $("gSample").innerHTML=s?(x=>`<p class="meta" style="margin:0 0 4px">Προς: ${esc(s.email)} · Θέμα: <b>${esc(x.subject)}</b></p>${greetMailParts(x.body).html}${$("gCrest").checked?`<p class="meta" style="margin:10px 0 0;display:flex;align-items:center;gap:8px"><img src="data:image/jpeg;base64,${CREST.b64}" alt="" style="height:44px;width:auto"> Συνημμένο: ${CREST.filename}</p>`:""}`)(greetContent(s)):"";
   greetDisarm();
@@ -1667,12 +1678,12 @@ function openGreet(picked){
   if(!picked.length)return;
   let tpl=null;try{tpl=JSON.parse(localStorage.getItem(GREET_TPL)||"null")}catch(e){}
   $("gSubj").value=tpl?.s||GREET_SUBJ;$("gBody").value=tpl?.b||greetBodyDef();
-  greetItems=picked.map(v=>({...v,email:greetMail(v.m),rk:memberRankIdx(v.m),on:true,done:false,err:""}));
+  greetItems=picked.map(v=>{const email=greetMail(v.m);return {...v,email,bcc:greetBcc(v.m,email),rk:memberRankIdx(v.m),on:true,done:false,err:""}});
   $("gErr").hidden=true;$("gStatus").textContent="";renderGreet();openOv("ovGreet");
   getMcp().then(m=>{if(!m){$("gSend").disabled=true;showErr("gErr","Η μαζική αποστολή γίνεται μέσω Gmail και δεν είναι διαθέσιμη εδώ. Στείλτε από «Προβολή» για κάθε εορτάζοντα.")}});
 }
 ["gSubj","gBody"].forEach(id=>$(id).addEventListener("input",()=>{greetSaveTpl();renderGreet()}));
-$("gCrest").onchange=renderGreet;
+$("gCrest").onchange=renderGreet;$("gBcc").onchange=renderGreet;
 $("gReset").onclick=()=>{$("gSubj").value=GREET_SUBJ;$("gBody").value=greetBodyDef();try{localStorage.removeItem(GREET_TPL)}catch(e){}renderGreet()};
 $("gSend").onclick=async()=>{
   const todo=greetItems.filter(g=>g.on&&!g.done);if(!todo.length)return;
@@ -1685,10 +1696,11 @@ $("gSend").onclick=async()=>{
     $("gStatus").textContent=`Αποστολή ${sent+1} από ${todo.length}: ${g.m.s} ${g.m.f}…`;
     const x=greetContent(g);
     try{
-      const h=greetMailParts(x.body),input={to:[g.email],subject:x.subject,body:h.text,htmlBody:h.html};
+      const h=greetMailParts(x.body),input={to:[g.email],subject:x.subject,body:h.text,htmlBody:h.html},bcc=$("gBcc").checked?g.bcc:[];
+      if(bcc.length)input.bcc=bcc;
       if($("gCrest").checked)input.attachments=[{content:CREST.b64,filename:CREST.filename,mimeType:CREST.mimeType}];
       await m.callTool("Gmail","send_message",input);
-      g.done=true;g.err="";sent++;await markGreet(g,{email:g.email,subject:x.subject});
+      g.done=true;g.err="";sent++;await markGreet(g,{email:g.email,subject:x.subject,bcc});
     }catch(e){
       g.err=e?.code==="tool_error"?"Απορρίφθηκε":"Δεν στάλθηκε";renderGreet();
       if(e?.code!=="tool_error"){showErr("gErr",(GMAIL_ERR[e?.code]||"Η αποστολή διακόπηκε. Για τον τελευταίο εορτάζοντα ελέγξτε τα «Απεσταλμένα» στο Gmail πριν το στείλετε ξανά.")+` Στάλθηκαν ${sent} από ${todo.length}.`);break}
