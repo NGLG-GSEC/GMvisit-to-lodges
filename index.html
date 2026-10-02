@@ -1629,6 +1629,14 @@ $("bulkSend").onclick=async()=>{
 const GREET_SUBJ="Χρόνια πολλά για την ονομαστική σας εορτή";
 const greetBodyDef=()=>`Προς: {Τίτλος} {Όνομα} {Επώνυμο}\n\nΑγαπητέ {Προσφώνηση},\n\nΣας μεταφέρω, με ιδιαίτερη χαρά, τις θερμότερες ευχές του Σεβτ. Αδ. Ιωάννη Μπενετάτου, Μεγάλου Διδασκάλου της Εθνικής Μεγάλης Στοάς της Ελλάδος, για την ονομαστική σας εορτή.\n\nΕύχεται από καρδιάς υγεία, χαρά, οικογενειακή ευτυχία και κάθε καλό στη ζωή και στο έργο σας.\n\nΟ Μέγας Γραμματεύς\nΠσεβ. Αδ. Δημήτριος Σκιαδόπουλος`;
 const GREET_TPL="lvr-greet-tpl4",GREET_HEAD="Εθνική Μεγάλη Στοά της Ελλάδος";
+// Title plaque: gold letters on navy inside a bevelled (ridge) gold frame. Gmail strips text-shadow and images,
+// but keeps tables, borders and background colours, so the relief comes from the frame.
+const GREET_PLAQUE=`<table width="100%" cellpadding="0" cellspacing="0" style="border:6px ridge #c9a54e;border-collapse:separate;margin:0 0 26px"><tr><td bgcolor="#14234a" align="center" style="background-color:#14234a;padding:6px">`+
+  `<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #c9a54e;border-collapse:separate"><tr><td align="center" style="padding:12px 10px 12px;text-align:center">`+
+  `<div style="color:#c9a54e;font-size:12px;letter-spacing:8px">✦ ✦ ✦</div>`+
+  `<div style="font-family:Georgia,'Times New Roman',serif;font-size:27px;font-weight:bold;letter-spacing:5px;line-height:1.3;color:#f0d78c;margin-top:4px">ΕΘΝΙΚΗ ΜΕΓΑΛΗ ΣΤΟΑ</div>`+
+  `<div style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;letter-spacing:8px;line-height:1.4;color:#f0d78c">ΤΗΣ ΕΛΛΑΔΟΣ</div>`+
+  `<div style="color:#c9a54e;font-size:12px;letter-spacing:8px;margin-top:4px">✦ ✦ ✦</div></td></tr></table></td></tr></table>`;
 // Salutation from the member's highest office: linked representative, Grand Officer record, or lodge Master
 const GREET_RK=["Αδ.","Σεβ.","Λίαν Σεβ.","Πσεβ.","Σεβτ."],GREET_TITLE=["Αδ.","Σεβ. Αδ.","Λίαν Σεβ. Αδ.","Πσεβ. Αδ.","Σεβτ. Αδ."],GREET_VOC=["Αδελφέ","Σεβάσμιε Αδελφέ","Λίαν Σεβάσμιε Αδελφέ","Πανσεβάσμιε Αδελφέ","Σεβασμιώτατε Αδελφέ"];
 function memberRankIdx(m){
@@ -1648,7 +1656,7 @@ function greetMailParts(text){
     if(/^Προς(\s|:)/.test(p)){const name=p.replace(/^Προς\s*:?\s*/,"");return `<p style="margin:0 0 20px;font-size:18px"><span style="font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#7a6a3a">Προς</span><br><b style="color:#1d2f5e">${br(name)}</b></p>`}
     if(i===last&&last>1){const [t,...rest]=p.split("\n");return `<p style="margin:30px 0 0;text-align:right;line-height:1.5">${rest.length?`<span style="font-style:italic;color:#4a5068">${t}</span><br><b>${rest.join("<br>")}</b>`:t}</p>`}
     return `<p style="margin:0 0 14px;${/^Αγαπητ/.test(p)?"":"text-align:justify"}">${br(p)}</p>`}).join("");
-  return {text:`${GREET_HEAD}\n\n${text}`,html:`<div style="max-width:620px;margin:0 auto;font-family:Georgia,'Times New Roman',serif;color:#1b1f2a;font-size:16px;line-height:1.6"><div style="text-align:center;font-size:22px;font-weight:bold;letter-spacing:.04em;color:#1d2f5e;padding:6px 0 12px;border-bottom:2px solid #b08d3c;margin-bottom:22px">${GREET_HEAD}</div>${paras}</div>`};
+  return {text:`${GREET_HEAD}\n\n${text}`,html:`<div style="max-width:620px;margin:0 auto;font-family:Georgia,'Times New Roman',serif;color:#1b1f2a;font-size:16px;line-height:1.6">${GREET_PLAQUE}${paras}</div>`};
 }
 let greetItems=[],greetTimer=0;
 function greetFill(t,it){return t.replace(/\{Προσφώνηση\}/g,GREET_VOC[it.rk+1]).replace(/\{Τίτλος\}/g,GREET_TITLE[it.rk+1]).replace(/\{Όνομα\}/g,it.m.f||"").replace(/\{Επώνυμο\}/g,it.m.s||"").replace(/\{Εορτή\}/g,it.label||"").replace(/\{Ημερομηνία\}/g,dayStr(it.date))}
