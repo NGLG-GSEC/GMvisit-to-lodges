@@ -219,6 +219,7 @@ tr.past td{opacity:.6}
       <button class="btn" id="importVisits">Επικόλληση λίστας</button>
       <button class="btn" id="reportBtn">Αναφορά PDF</button>
       <button class="btn" id="pubBtn" title="Ενημέρωση Επαρχιακού Γραμματέα και εκπροσώπων">Publish</button>
+      <button class="btn primary" id="gmBtn" title="Σελίδα επιλογής εκπροσώπων για τον Μεγάλο Διδάσκαλο, εισαγωγή απόφασης και επίσημες επιστολές">Επιλογή ΜΔ &amp; Επιστολές</button>
     </div>
     <div id="months"></div>
   </section>
@@ -433,6 +434,62 @@ tr.past td{opacity:.6}
       <button type="submit" class="btn primary">Εισαγωγή</button>
     </div>
   </form>
+</div>
+
+<div class="overlay" id="ovGm" hidden>
+  <div class="panel wide">
+    <h3>Επιλογή εκπροσώπων από τον Μεγάλο Διδάσκαλο</h3>
+
+    <h4 class="subhead">1. Σελίδα για τον Μεγάλο Διδάσκαλο</h4>
+    <p class="hint">Ο ΜΔ βλέπει μόνο μια απλή σελίδα με τις Εγκαταστάσεις και τον επιλογέα εκπροσώπου — όχι την εφαρμογή. Δεν περιλαμβάνονται email, κινητά ή άλλα στοιχεία επικοινωνίας.</p>
+    <div class="grid">
+      <div class="field"><label for="gFrom">Εγκαταστάσεις από</label><input id="gFrom" type="date"></div>
+      <div class="field"><label for="gProv">Επαρχία</label><select id="gProv"></select></div>
+      <div class="field full"><label class="chk"><input type="checkbox" id="gOnly" checked> Μόνο όσες δεν έχουν ακόμη εκπρόσωπο</label></div>
+      <div class="field full"><label for="gReply">Email στο οποίο θα επιστρέψει η απόφαση</label><input id="gReply" type="email" placeholder="π.χ. grand.secretary@nglgreece.gr"></div>
+      <div class="field full"><label for="gBase">Διεύθυνση της σελίδας ΜΔ (gm.html)</label><input id="gBase" type="url" placeholder="https://…/gm.html">
+        <p class="hint">Συμπληρώνεται αυτόματα όταν η εφαρμογή ανοίγει από web server (π.χ. GitHub Pages). Για σύνδεσμο που ανοίγει κατευθείαν, χρησιμοποιήστε το «Αντιγραφή συνδέσμου»· αλλιώς το «Λήψη αρχείου» δίνει αυτόνομη σελίδα για αποστολή με email.</p></div>
+    </div>
+    <p class="hint" id="gCount"></p>
+    <div class="actions" style="justify-content:flex-start">
+      <button type="button" class="btn primary" id="gLink">Αντιγραφή συνδέσμου</button>
+      <button type="button" class="btn" id="gFile">Λήψη αρχείου (αυτόνομη σελίδα)</button>
+    </div>
+    <div class="err" id="gErr" hidden></div>
+
+    <h4 class="subhead">2. Εισαγωγή της απόφασης του Μεγάλου Διδασκάλου</h4>
+    <div class="field full"><label for="gCode">Επικολλήστε τον κωδικό που στάλθηκε (ή φορτώστε το αρχείο)</label>
+      <textarea id="gCode" rows="3" placeholder="GMVISIT1:…" style="width:100%"></textarea>
+      <input type="file" id="gFileIn" accept=".txt,.json,text/plain" style="margin-top:6px"></div>
+    <div class="preview" id="gPreview" hidden></div>
+    <div class="err" id="gImpErr" hidden></div>
+    <div class="actions" style="justify-content:flex-start"><button type="button" class="btn primary" id="gApply" hidden>Εφαρμογή απόφασης ΜΔ</button></div>
+
+    <h4 class="subhead">3. Επίσημες επιστολές προς τους Επαρχιακούς Γραμματείς</h4>
+    <div id="gLetters"></div>
+
+    <div class="actions"><button type="button" class="btn ghost" data-close>Κλείσιμο</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="ovLetter" hidden>
+  <div class="panel wide">
+    <h3>Επιστολή προς τον Επαρχιακό Μεγάλο Γραμματέα</h3>
+    <div class="grid">
+      <div class="field full"><label for="lProvSel">Επαρχία</label><select id="lProvSel"></select><p class="hint" id="lMail"></p></div>
+      <div class="field"><label for="lDate">Ημερομηνία επιστολής</label><input id="lDate" type="date"></div>
+      <div class="field"><label for="lProt">Αρ. Πρωτοκόλλου</label><input id="lProt" placeholder="π.χ. 1234"></div>
+      <div class="field full"><label class="chk"><input type="checkbox" id="lAll"> Να περιλαμβάνονται και Εγκαταστάσεις που έχουν ήδη κοινοποιηθεί στην Επαρχία</label></div>
+    </div>
+    <p class="hint" id="lCount"></p>
+    <div class="preview" id="lPreview"></div>
+    <div class="err" id="lErr" hidden></div>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-close>Κλείσιμο</button>
+      <button type="button" class="btn" id="lPdf">Λήψη PDF (A4)</button>
+      <button type="button" class="btn primary" id="lMailBtn">Email με συνημμένο PDF</button>
+    </div>
+  </div>
 </div>
 
 <div class="overlay" id="ovPub" hidden>
@@ -696,7 +753,7 @@ function renderVisits(){
           ${r||pn?`<div class="vact">${r&&canWrite?`<button type="button" class="btn sm${rn?" ghost":" primary"}" data-brief="${esc(v.id)}">${rn?"↻ Ξανά αποστολή στον εκπρόσωπο":"✉ Ενημέρωση εκπροσώπου"}</button>`:""}${rn?`<span class="okpill">✓ Εκπρόσωπος ενημερώθηκε ${esc(fmtDate(rn.at))}</span>`:""}${pn?`<span class="okpill">✓ Επαρχία ενημερώθηκε ${esc(fmtDate(pn.at))}</span>`:""}</div>`:""}
           ${v.notes?`<div class="note">${esc(v.notes)}</div>`:""}
           ${v.province?`<span class="chip"${pcStyle(v.province)}><span class="pdot"></span>${esc(v.province)}</span>${provByShort(v.province)?.email?`<div class="mail">${esc(provByShort(v.province).email)}</div>`:""}`:""}</div>
-        <div class="rep">${r?`<div class="who">${esc(repLabel(r))}</div><div class="role">${esc(r.office||"")}</div>`:`<span class="pill-warn">Χωρίς εκπρόσωπο</span>`}</div>
+        <div class="rep">${r?`<div class="who">${esc(repLabel(r))}</div><div class="role">${esc(r.office||"")}</div>${v.gmDecided&&v.gmDecided.repId===v.repId?'<div class="okpill" style="margin-top:4px">✓ Απόφαση ΜΔ</div>':""}`:`<span class="pill-warn">Χωρίς εκπρόσωπο</span>`}</div>
       </div>`}).join("")}</div></section>`}).join("");
   box.querySelectorAll(".visit").forEach(b=>{const open=()=>openVisit(visits.find(v=>v.id===b.dataset.id));b.onclick=open;b.onkeydown=e=>{if((e.key==="Enter"||e.key===" ")&&e.target===b){e.preventDefault();open()}}});
   box.querySelectorAll("[data-brief]").forEach(b=>b.onclick=e=>{e.stopPropagation();const v=visits.find(x=>x.id===b.dataset.brief),r=repById(v?.repId);if(v&&r)repMail(r,[v])});
@@ -1846,7 +1903,7 @@ $("formVisit").addEventListener("submit",async e=>{
   const rv=$("vRep").value.trim();
   if(rv){const r=reps.find(r=>repOpt(r)===rv);if(!r){showErr("vErr","Επιλέξτε εκπρόσωπο από τη λίστα αναζήτησης (πληκτρολογήστε όνομα ή επώνυμο).");return}data.repId=r.id}
   const id=editingVisit?.id||newId("v");
-  ["repNotified","provNotified"].forEach(k=>{if(editingVisit?.[k])data[k]=editingVisit[k]});
+  ["repNotified","provNotified","gmDecided"].forEach(k=>{if(editingVisit?.[k])data[k]=editingVisit[k]});
   if(await save("visits",id,data)){closeOv($("formVisit"));toast("Αποθηκεύτηκε")}
 });
 $("vDel").onclick=()=>askConfirm(`Διαγραφή της επίσκεψης στη Στοά «${editingVisit.lodge}»;`,async()=>{if(await remove("visits",editingVisit.id)){$("ovVisit").hidden=true;toast("Διαγράφηκε")}});
@@ -2024,6 +2081,229 @@ $("reportBtn").onclick=openReport;
 function askConfirm(text,fn){$("confirmText").textContent=text;confirmFn=fn;openOv("ovConfirm")}
 $("confirmYes").onclick=async()=>{$("ovConfirm").hidden=true;if(confirmFn)await confirmFn();confirmFn=null};
 
+/* ===== Επιλογή εκπροσώπων από τον Μεγάλο Διδάσκαλο & επίσημες επιστολές ===== */
+const GM_PREFIX="GMVISIT1:";
+const GEN_MONTHS=["Ιανουαρίου","Φεβρουαρίου","Μαρτίου","Απριλίου","Μαΐου","Ιουνίου","Ιουλίου","Αυγούστου","Σεπτεμβρίου","Οκτωβρίου","Νοεμβρίου","Δεκεμβρίου"];
+const longDate=iso=>{const d=parseISO(iso);return `${d.getDate()} ${GEN_MONTHS[d.getMonth()]} ${d.getFullYear()}`};
+function gmVisits(){
+  const from=$("gFrom").value||todayISO(),prov=$("gProv").value,only=$("gOnly").checked;
+  return visits.filter(v=>v.date>=from&&(!prov||v.province===prov)&&(!only||!repById(v.repId)))
+    .sort((a,b)=>a.date.localeCompare(b.date)||(Number(a.number)||0)-(Number(b.number)||0));
+}
+function gmPayload(){
+  const list=gmVisits();
+  return {v:1,issued:todayISO()+"-"+Date.now().toString(36),replyTo:$("gReply").value.trim(),
+    reps:sortedReps().filter(r=>!/^Πρώην/.test(r.office||"")).map(r=>({id:r.id,l:repOpt(r)})),
+    visits:list.map(v=>({id:v.id,d:v.date,n:v.number||"",lodge:v.lodge,loc:v.location||"",prov:v.province||"",rep:v.repId||""}))};
+}
+function gmUpdateCount(){const n=gmVisits().length;$("gCount").textContent=`${n} ${n===1?"Εγκατάσταση θα περιληφθεί":"Εγκαταστάσεις θα περιληφθούν"} στη σελίδα του Μεγάλου Διδασκάλου.`;["gLink","gFile"].forEach(id=>$(id).disabled=!n)}
+function openGm(){
+  $("gProv").innerHTML='<option value="">Όλες οι Επαρχίες</option>'+sortedProvs().map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("");
+  if(!$("gFrom").value)$("gFrom").value=todayISO();
+  let saved="";try{saved=localStorage.getItem("lvr-gm-reply")||""}catch(e){}
+  if(!$("gReply").value)$("gReply").value=saved||provinces.find(p=>/^ΕΜΣτΕ/.test(p.short)||p.id==="p-grand-lodge")?.email||"";
+  if(!$("gBase").value){let b="";try{b=localStorage.getItem("lvr-gm-base")||""}catch(e){}
+    if(!b&&/^https?:$/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.hostname))b=new URL("gm.html",location.href).href;
+    $("gBase").value=b}
+  $("gErr").hidden=true;gmUpdateCount();gmPreview();renderGmLetters();openOv("ovGm");
+}
+["gFrom","gProv","gOnly"].forEach(id=>$(id).addEventListener("input",gmUpdateCount));
+$("gmBtn").onclick=openGm;
+async function gzipB64u(str){
+  const bytes=new TextEncoder().encode(str);
+  if(window.CompressionStream){
+    const s=new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+    const buf=new Uint8Array(await new Response(s).arrayBuffer());
+    let x="";for(let i=0;i<buf.length;i+=0x8000)x+=String.fromCharCode(...buf.subarray(i,i+0x8000));
+    return btoa(x).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  let x="";for(let i=0;i<bytes.length;i+=0x8000)x+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+  return btoa(x).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function gmRememberSettings(){try{localStorage.setItem("lvr-gm-reply",$("gReply").value.trim());localStorage.setItem("lvr-gm-base",$("gBase").value.trim())}catch(e){}}
+$("gLink").onclick=async()=>{
+  const base=$("gBase").value.trim();
+  if(!/^https?:\/\//.test(base)){showErr("gErr","Συμπληρώστε τη διεύθυνση της σελίδας ΜΔ (gm.html) ή χρησιμοποιήστε το «Λήψη αρχείου».");return}
+  $("gErr").hidden=true;gmRememberSettings();
+  const url=base.replace(/#.*$/,"")+"#d="+await gzipB64u(JSON.stringify(gmPayload()));
+  try{await navigator.clipboard.writeText(url);toast("Ο σύνδεσμος αντιγράφηκε — στείλτε τον στον ΜΔ")}
+  catch(e){window.prompt("Αντιγράψτε τον σύνδεσμο:",url)}
+};
+$("gFile").onclick=async()=>{
+  $("gErr").hidden=true;gmRememberSettings();
+  let html;
+  try{const r=await fetch("gm.html",{cache:"no-store"});if(!r.ok)throw 0;html=await r.text()}
+  catch(e){showErr("gErr","Η σελίδα gm.html δεν βρέθηκε δίπλα στην εφαρμογή. Χρησιμοποιήστε το «Αντιγραφή συνδέσμου» με τη διεύθυνση όπου έχει ανεβεί το gm.html.");return}
+  const data=JSON.stringify(gmPayload()).replace(/</g,"\\u003c");
+  const SO="<scr"+"ipt>",SC="</scr"+"ipt>";
+  html=html.replace(SO,SO+"window.GM_DATA="+data+";"+SC+"\n"+SO);
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+  a.download=`Epilogi-Ekprosopon-MD-${todayISO()}.html`;document.body.appendChild(a);a.click();a.remove();toast("Η σελίδα του ΜΔ αποθηκεύτηκε");
+};
+
+/* Εισαγωγή απόφασης */
+let gmDecision=null;
+function gmParse(text){
+  text=(text||"").trim();if(!text)return null;
+  const m=text.match(/GMVISIT1:([A-Za-z0-9+/=]+)/);if(!m)throw new Error("Ο κωδικός δεν αναγνωρίζεται. Πρέπει να αρχίζει με GMVISIT1:");
+  const d=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(m[1]),c=>c.charCodeAt(0))));
+  if(!Array.isArray(d.picks))throw new Error("Ο κωδικός είναι κατεστραμμένος.");
+  return d;
+}
+function gmPreview(){
+  const box=$("gPreview");gmDecision=null;$("gApply").hidden=true;$("gImpErr").hidden=true;
+  let d;
+  try{d=gmParse($("gCode").value)}catch(e){box.hidden=true;showErr("gImpErr",e.message);return}
+  if(!d){box.hidden=true;return}
+  const rows=d.picks.map(p=>({p,v:visits.find(v=>v.id===p.id)})).filter(x=>x.v);
+  const skipped=d.picks.length-rows.length;
+  if(!rows.length){box.hidden=true;showErr("gImpErr","Καμία από τις επιλογές δεν αντιστοιχεί σε επίσκεψη της εφαρμογής.");return}
+  gmDecision={d,rows};
+  box.hidden=false;
+  box.innerHTML=`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Μέχρι τώρα</th><th>Επιλογή ΜΔ</th></tr></thead><tbody>${rows.map(({p,v})=>{
+    const cur=repById(v.repId),nr=p.rep?repById(p.rep):null;
+    return `<tr><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td>
+      <td>${cur?esc(repLabel(cur)):'<span class="nr">—</span>'}</td>
+      <td><b>${nr?esc(repLabel(nr)):esc(p.name||"?")}</b>${!nr?' <span class="meta">(νέος εκπρόσωπος)</span>':""}${cur&&nr&&cur.id===nr.id?' <span class="meta">(αμετάβλητο)</span>':""}</td></tr>`}).join("")}</tbody></table>`;
+  $("gApply").hidden=false;$("gApply").textContent=`Εφαρμογή απόφασης ΜΔ (${rows.length})`;
+  if(skipped)showErr("gImpErr",`${skipped} ${skipped===1?"επιλογή αγνοήθηκε":"επιλογές αγνοήθηκαν"} (η επίσκεψη δεν υπάρχει πλέον).`);
+}
+$("gCode").addEventListener("input",gmPreview);
+$("gFileIn").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("gCode").value=await f.text();gmPreview();e.target.value=""};
+function splitName(full){const t=full.replace(/\s+/g," ").trim().split(" ");return t.length<2?{name:"",surname:t[0]||""}:{name:t[0],surname:t.slice(1).join(" ")}}
+$("gApply").onclick=async()=>{
+  if(!gmDecision||!canWrite)return;
+  const btn=$("gApply");btn.disabled=true;let n=0,created=0;
+  try{
+    const newByName={};
+    for(const {p,v} of gmDecision.rows){
+      let rid=p.rep&&repById(p.rep)?p.rep:"";
+      if(!rid&&p.name){
+        const key=fold(p.name);
+        if(!newByName[key]){
+          const ex=reps.find(r=>fold(`${r.name} ${r.surname}`)===key||fold(`${r.surname} ${r.name}`)===key);
+          if(ex)newByName[key]=ex.id;
+          else{const id=newId("r");if(await save("reps",id,{...splitName(p.name),office:"",year:"",addedByGm:true},true)){newByName[key]=id;created++}}
+        }
+        rid=newByName[key]||"";
+      }
+      if(!rid)continue;
+      const cur=visits.find(x=>x.id===v.id)||v;
+      if(await save("visits",cur.id,{...strip(cur),repId:rid,gmDecided:{at:todayISO(),repId:rid}},true))n++;
+    }
+    render();toast(`Εφαρμόστηκαν ${n} επιλογές του ΜΔ${created?` · ${created} νέοι εκπρόσωποι (συμπληρώστε αξίωμα/email στην καρτέλα «Εκπρόσωποι»)`:""}`);
+    $("gCode").value="";gmPreview();renderGmLetters();
+  }finally{btn.disabled=false}
+};
+function renderGmLetters(){
+  const today=todayISO(),box=$("gLetters");
+  const by=new Map();visits.filter(v=>v.date>=today&&v.province&&repById(v.repId)).forEach(v=>{(by.get(v.province)||by.set(v.province,[]).get(v.province)).push(v)});
+  const provs=sortedProvs().filter(p=>by.has(p.short));
+  box.innerHTML=provs.length?provs.map(p=>{const vs=by.get(p.short),pend=vs.filter(v=>!provNotified(v)).length;
+    return `<div class="reprow"><div style="min-width:0"><b>${esc(p.short)}</b> <span class="meta">· ${vs.length} με εκπρόσωπο · ${pend?`${pend} προς κοινοποίηση`:"όλες κοινοποιήθηκαν"}</span></div>
+      <button type="button" class="btn sm${pend?" primary":""}" data-letter="${esc(p.short)}">Επιστολή</button></div>`}).join(""):`<p class="hint">Δεν υπάρχουν ακόμη προσεχείς Εγκαταστάσεις με εκπρόσωπο. Εισαγάγετε πρώτα την απόφαση του ΜΔ ή ορίστε εκπροσώπους από το Ημερολόγιο.</p>`;
+  box.querySelectorAll("[data-letter]").forEach(b=>b.onclick=()=>openLetter(b.dataset.letter));
+}
+
+/* Επίσημη επιστολή */
+function provPerson(p,k){const m=memberById(p?.[k+"MemberId"]);return m?`${m.s} ${m.f}`:(p?.[k+"Name"]||"")}
+function letterRows(){
+  const prov=$("lProvSel").value,all=$("lAll").checked,today=todayISO();
+  return visits.filter(v=>v.province===prov&&v.date>=today&&repById(v.repId)&&(all||!provNotified(v)))
+    .sort((a,b)=>a.date.localeCompare(b.date)||(Number(a.number)||0)-(Number(b.number)||0));
+}
+function renderLetter(){
+  const p=provByShort($("lProvSel").value),rows=letterRows(),sec=provPerson(p,"sec");
+  $("lMail").textContent=`${p?.title||"Γραμματεία"}${sec?": "+sec:""}${p?.email?" — "+p.email:" — δεν έχει email (καρτέλα «Επαρχίες»)"}`;
+  $("lCount").textContent=`${rows.length} ${rows.length===1?"Εγκατάσταση":"Εγκαταστάσεις"} στην επιστολή.`;
+  $("lPreview").innerHTML=rows.length?`<table><thead><tr><th>Ημερομηνία</th><th>Στοά</th><th>Τόπος</th><th>Εκπρόσωπος ΜΔ</th></tr></thead><tbody>${rows.map(v=>`<tr${pcStyle(v.province)}><td>${esc(dayStr(v.date))}</td><td>${esc(v.lodge)}${v.number?` <span class="meta">Αρ. ${esc(v.number)}</span>`:""}</td><td>${esc(v.location||"—")}</td><td>${esc(repFull(repById(v.repId)))}${provNotified(v)?' <span class="okpill">✓ κοινοπ.</span>':""}</td></tr>`).join("")}</tbody></table>`:`<div class="empty" style="margin:0">Δεν υπάρχουν Εγκαταστάσεις προς κοινοποίηση. Επιλέξτε «να περιλαμβάνονται και όσες έχουν ήδη κοινοποιηθεί» για επανέκδοση.</div>`;
+  ["lPdf","lMailBtn"].forEach(id=>$(id).disabled=!rows.length);$("lErr").hidden=true;
+}
+function openLetter(short){
+  $("lProvSel").innerHTML=sortedProvs().map(p=>`<option value="${esc(p.short)}">${esc(p.short)}</option>`).join("");
+  if(short)$("lProvSel").value=short;
+  if(!$("lDate").value)$("lDate").value=todayISO();
+  renderLetter();openOv("ovLetter");
+}
+["lProvSel","lDate","lAll"].forEach(id=>$(id).addEventListener("input",renderLetter));
+function letterTexts(p,rows){
+  const one=rows.length===1,sec=provPerson(p,"sec"),pgm=provPerson(p,"gm");
+  return {
+    to:`Προς: Τον Επαρχιακό Μεγάλο Γραμματέα${sec?" Σεβτ. Αδ. "+sec:""}\n${p?.full||p?.short||""}`,
+    cc:pgm?`Κοιν.: Τον ${gmLabel(p)==="Μέγας Διδάσκαλος"?"Μέγα Διδάσκαλο":"Επαρχιακό Μέγα Διδάσκαλο"} Σεβτ. Αδ. ${pgm}`:"",
+    subject:one?"Εκπροσώπηση του Μεγάλου Διδασκάλου στην Εγκατάσταση Σεβασμίου Διδασκάλου":"Εκπροσώπηση του Μεγάλου Διδασκάλου στις Εγκαταστάσεις Σεβασμίων Διδασκάλων",
+    open:"Σεβαστέ και Αγαπητέ Αδελφέ,",
+    p1:`Με την παρούσα σας γνωρίζουμε ότι ο Μέγας Διδάσκαλος της Εθνικής Μεγάλης Στοάς της Ελλάδος όρισε ως εκπροσώπους του ${one?"στην Εγκατάσταση του Σεβασμίου Διδασκάλου της κάτωθι Σεβαστής Στοάς της Επαρχίας σας":"στις Εγκαταστάσεις των Σεβασμίων Διδασκάλων των κάτωθι Σεβαστών Στοών της Επαρχίας σας"} τους ακόλουθους Αδελφούς:`,
+    p2:`Παρακαλούμε όπως ενημερώσετε σχετικά ${one?"τη Σεβαστή Στοά":"τις Σεβαστές Στοές"} και όπως μεριμνήσετε για την έγκαιρη γνωστοποίηση της ώρας και του τόπου ${one?"της τελετής":"των τελετών"} στους εκπροσώπους του Μεγάλου Διδασκάλου.`,
+    p3:"Με Τεκτονικούς χαιρετισμούς,"
+  };
+}
+function letterPdf(p,rows){
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
+  doc.addFileToVFS("DV.ttf",PDF_FONTS.r);doc.addFont("DV.ttf","DV","normal");
+  doc.addFileToVFS("DVB.ttf",PDF_FONTS.b);doc.addFont("DVB.ttf","DV","bold");
+  const W=210,M=22,INK=[21,32,58],BRASS=[156,122,34],MUTED=[91,103,128],T=letterTexts(p,rows);
+  doc.setFont("DV","bold");doc.setFontSize(12);doc.setTextColor(...INK);
+  doc.text("ΕΘΝΙΚΗ ΜΕΓΑΛΗ ΣΤΟΑ ΤΗΣ ΕΛΛΑΔΟΣ",W/2,18,{align:"center"});
+  doc.setFont("DV","normal");doc.setFontSize(9.5);doc.setTextColor(...BRASS);
+  doc.text("Η ΜΕΓΑΛΗ ΚΑΓΚΕΛΑΡΙΑ",W/2,24,{align:"center"});
+  doc.setDrawColor(...BRASS);doc.setLineWidth(.5);doc.line(M,28,W-M,28);
+  doc.setTextColor(...INK);doc.setFontSize(10.5);
+  const dt=$("lDate").value||todayISO(),prot=$("lProt").value.trim();
+  let y=37;
+  doc.text(`Αθήνα, ${longDate(dt)}`,W-M,y,{align:"right"});
+  if(prot){y+=5.5;doc.text(`Αρ. Πρωτ.: ${prot}`,W-M,y,{align:"right"})}
+  y=Math.max(y+9,48);
+  doc.setFont("DV","bold");
+  for(const line of doc.splitTextToSize(T.to,W-2*M)){doc.text(line,M,y);y+=5.5}
+  doc.setFont("DV","normal");
+  if(T.cc){for(const line of doc.splitTextToSize(T.cc,W-2*M)){doc.text(line,M,y);y+=5.2}}
+  y+=4;doc.setFont("DV","bold");
+  const subj=doc.splitTextToSize(`ΘΕΜΑ: ${T.subject}`,W-2*M);doc.text(subj,M,y);y+=subj.length*5.5+4;
+  doc.setFont("DV","normal");doc.text(T.open,M,y);y+=7;
+  const p1=doc.splitTextToSize(T.p1,W-2*M);doc.text(p1,M,y,{lineHeightFactor:1.5,align:"left"});y+=p1.length*5.6+3;
+  doc.autoTable({startY:y,margin:{left:M,right:M,top:20,bottom:22},theme:"grid",
+    head:[["Α/Α","Ημερομηνία","Σεβαστή Στοά","Τόπος","Εκπρόσωπος ΜΔ"]],
+    body:rows.map((v,i)=>{const r=repById(v.repId);return [String(i+1),`${DAYS[parseISO(v.date).getDay()]}\n${fmtDate(v.date)}`,`${v.lodge}${v.number?" Αρ. "+v.number:""}`,v.location||"—",`${repFull(r)}`]}),
+    styles:{font:"DV",fontSize:9.2,textColor:INK,cellPadding:2.2,lineColor:[200,206,220],lineWidth:.2,valign:"middle",overflow:"linebreak"},
+    headStyles:{font:"DV",fontStyle:"bold",fillColor:INK,textColor:255,fontSize:9},
+    columnStyles:{0:{cellWidth:12,halign:"center"},1:{cellWidth:27},2:{cellWidth:42},3:{cellWidth:30},4:{cellWidth:"auto"}},
+    rowPageBreak:"avoid",showHead:"everyPage"});
+  y=doc.lastAutoTable.finalY+8;
+  const tail=doc.splitTextToSize(T.p2,W-2*M);
+  if(y+tail.length*5.6+40>285){doc.addPage();y=26}
+  doc.setFont("DV","normal");doc.setFontSize(10.5);doc.setTextColor(...INK);
+  doc.text(tail,M,y,{lineHeightFactor:1.5});y+=tail.length*5.6+6;
+  doc.text(T.p3,W-M-62,y);y+=6;
+  const sig=SIGN.split("\n").slice(2);
+  doc.setFont("DV","bold");sig.forEach((l,i)=>{doc.text(l,W-M-62,y+6+i*5.4);if(i===0)doc.setFont("DV","normal")});
+  const n=doc.getNumberOfPages();
+  for(let i=1;i<=n;i++){doc.setPage(i);doc.setFont("DV","normal");doc.setFontSize(7.5);doc.setTextColor(...MUTED);if(n>1)doc.text(`Σελίδα ${i} από ${n}`,W-M,289,{align:"right"})}
+  return doc;
+}
+function letterFilename(p){const d=new Date(),st=String(d.getDate()).padStart(2,"0")+String(d.getMonth()+1).padStart(2,"0")+String(d.getFullYear()).slice(2);
+  return `Epistoli_Ekprosopisis_MD_${(p?.short||"Eparchia").replace(/[^A-Za-zΑ-Ωα-ωίόάέύήώϊΐϋΰ0-9]+/g,"_")}_${st}.pdf`}
+function letterReady(){
+  if(!window.jspdf?.jsPDF||!window.PDF_FONTS){showErr("lErr","Η δημιουργία PDF δεν φόρτωσε. Ελέγξτε τη σύνδεση και ανανεώστε τη σελίδα.");return null}
+  const p=provByShort($("lProvSel").value),rows=letterRows();return rows.length?{p,rows}:null;
+}
+$("lPdf").onclick=async()=>{
+  const x=letterReady();if(!x)return;
+  try{await saveFile(letterFilename(x.p),letterPdf(x.p,x.rows).output("blob"),"lErr")}catch(e){showErr("lErr","Η δημιουργία του PDF απέτυχε.")}
+};
+$("lMailBtn").onclick=()=>{
+  const x=letterReady();if(!x)return;
+  let b64s;try{b64s=letterPdf(x.p,x.rows).output("datauristring").split(",")[1]}catch(e){showErr("lErr","Η δημιουργία του PDF απέτυχε.");return}
+  const T=letterTexts(x.p,x.rows),sec=provPerson(x.p,"sec");
+  const lines=x.rows.map((v,i)=>`${i+1}. ${dayStr(v.date)} — ${lodgeRef(v)}${v.location?` — ${v.location}`:""}\n   Εκπρόσωπος ΜΔ: ${repFull(repById(v.repId))}`).join("\n\n");
+  const ids=x.rows.map(v=>v.id);
+  openMail({title:"Επιστολή προς Επαρχιακό Μεγάλο Γραμματέα",to:x.p?.email||"",subject:T.subject,
+    body:`${sec?"Σεβτ. Αδ. "+sec+",":"Σεβαστέ και Αγαπητέ Αδελφέ,"}\n\nΣας αποστέλλουμε συνημμένα την επίσημη επιστολή της Μεγάλης Καγκελαρίας σχετικά με την εκπροσώπηση του Μεγάλου Διδασκάλου στις Εγκαταστάσεις των Σεβασμίων Διδασκάλων της Επαρχίας σας:\n\n${lines}\n\nΠαρακαλούμε όπως ενημερώσετε σχετικά τις Σεβαστές Στοές.\n\n${SIGN}`,
+    attach:{filename:letterFilename(x.p),mimeType:"application/pdf",b64:b64s,label:"επίσημη επιστολή PDF"},
+    onSent:()=>markVisits(ids,"provNotified").then(()=>{renderGmLetters();renderLetter()}),
+    hint:x.p?.email?"":"Η Επαρχία δεν έχει email Γραμματείας — συμπληρώστε το παρακάτω."});
+};
+
 /* Storage */
 function newId(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function strip(o){const {id,...r}=o;return r}
@@ -2093,7 +2373,7 @@ async function remove(col,id){
   render();return true;
 }
 function mergeReps(){reps=repsRaw.map(r=>{const c=repContacts[r.id];return c&&typeof c==="object"?{...r,...c}:r})}
-function renderEditState(){$("tab-members").hidden=!canWrite;$("tab-projects").hidden=!canWrite;if(!canWrite&&(!$("view-members").hidden||!$("view-projects").hidden))showTab("visits");["addVisit","importVisits","pubBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
+function renderEditState(){$("tab-members").hidden=!canWrite;$("tab-projects").hidden=!canWrite;if(!canWrite&&(!$("view-members").hidden||!$("view-projects").hidden))showTab("visits");["addVisit","importVisits","pubBtn","gmBtn","addRep","importReps","rankMapBtn","addProv","addLodge"].forEach(id=>$(id).hidden=!canWrite)}
 
 render();
 (async()=>{
