@@ -2319,6 +2319,14 @@ function loadLocal(){
 // Merges SEED.updates not yet applied: new lodges, lodge locations (only where empty), lodgeChanges
 // and visits (skipped if the same id or the same lodge & date already exists).
 // Returns the ids of the updates that were fully applied.
+// Βρίσκει εκπρόσωπο από όνομα πίνακα: «Μέγας Διδάσκαλος» (εν ενεργεία), «Όνομα Επώνυμο» ή μόνο Επώνυμο· κενό αν δεν υπάρχει μοναδικό ταίριασμα
+function seedRepId(name){
+  const f=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/ς/g,"σ").trim();
+  const n=f(name);let c;
+  if(n===f("Μέγας Διδάσκαλος"))c=reps.filter(r=>(r.office||"").split(" · ").some(o=>/^Μέγας Διδάσκαλος(\s*\(\d{4}\))?$/.test(o.trim())));
+  else c=reps.filter(r=>f(r.name+" "+r.surname)===n||f(r.surname+" "+r.name)===n||(!n.includes(" ")&&f(r.surname)===n));
+  return c.length===1?c[0].id:"";
+}
 async function applySeedUpdates(done){
   const todo=(window.SEED?.updates||[]).filter(u=>!done.includes(u.id)),ok=[];
   if(!todo.length||!canWrite)return ok;
@@ -2342,7 +2350,16 @@ async function applySeedUpdates(done){
         if(db){try{await db.doc("settings/rankmap").set({map:next})}catch(e){good=false}}
         rankMap=next}
     }
-    for(const v of u.visits||[])if(!visits.some(x=>x.id===v.id||(String(x.number)===v.number&&x.date===v.date)))good=await save("visits",v.id,strip(v),true)&&good;
+    // repName: εκπρόσωπος όπως δόθηκε σε πίνακα· ορίζεται μόνο αν ταιριάζει με έναν μοναδικό εκπρόσωπο και η επίσκεψη δεν έχει ήδη εκπρόσωπο, αλλιώς σημειώνεται στις παρατηρήσεις
+    for(const v0 of u.visits||[]){
+      const {repName,...v}=v0,ex=visits.find(x=>x.id===v.id||(String(x.number)===v.number&&x.date===v.date));
+      const rid=repName?seedRepId(repName):"";
+      const tag=`Εκπρόσωπος (πίνακας 2026–27): ${repName}`;
+      if(!ex){const nv={...v};if(rid)nv.repId=rid;else if(repName)nv.notes=[v.notes,tag].filter(Boolean).join(" · ");good=await save("visits",v.id,strip(nv),true)&&good}
+      else if(repName&&!ex.repId){
+        if(rid)good=await save("visits",ex.id,{...strip(ex),repId:rid},true)&&good;
+        else if(!(ex.notes||"").includes(tag))good=await save("visits",ex.id,{...strip(ex),notes:[ex.notes,tag].filter(Boolean).join(" · ")},true)&&good}
+    }
     if(good)ok.push(u.id);
   }
   render();return ok;
