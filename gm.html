@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ορισμός Εκπροσώπων — Μέγας Διδάσκαλος</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f3f5f9;--surface:#fff;--ink:#15203a;--muted:#5b6780;--line:#dde2ec;
+  --lapis:#1f3f8f;--lapis-soft:#e7ecf8;--brass:#9c7a22;--brass-soft:#f6efdc;--ok:#1d7a3e;--ok-soft:#e3f3e8;--warn:#9a4a12;
+  --display:"GFS Didot","Didot",Georgia,serif;--body:"Noto Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#0f1422;--surface:#171e31;--ink:#e7ebf4;--muted:#9aa5bd;--line:#2a3350;
+  --lapis:#8fa9ec;--lapis-soft:#1f2a48;--brass:#d9b865;--brass-soft:#2e2819;--ok:#7fd99b;--ok-soft:#173322;--warn:#f0a56e}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--body)}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 120px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);font-weight:600}
+h1{font:400 26px/1.2 var(--display);margin:4px 0 6px}
+.lead{color:var(--muted);margin:0 0 16px}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.progress{font-weight:600}
+.progress b{color:var(--lapis)}
+.grow{flex:1}
+input,select,button{font:inherit}
+input[type=search],input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.btn{padding:10px 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-weight:600}
+.btn.primary{background:var(--lapis);border-color:var(--lapis);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#0f1422}}
+.btn:disabled{opacity:.5;cursor:default}
+h2{font:400 18px var(--display);margin:24px 0 8px;color:var(--lapis)}
+h2 small{font:500 12px var(--body);color:var(--muted);margin-left:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--brass);border-radius:10px;padding:12px 14px;margin:0 0 10px;display:grid;grid-template-columns:62px 1fr;gap:4px 14px}
+.card.done{border-left-color:var(--ok)}
+.date{text-align:center;background:var(--lapis-soft);border-radius:8px;padding:6px 2px;align-self:start}
+.date .d{font:400 24px/1 var(--display);color:var(--lapis)}
+.date .w{font-size:11px;color:var(--muted);margin-top:2px}
+.lodge{font-weight:700}
+.lodge .no{font-weight:500;color:var(--muted);margin-left:6px;font-size:13px}
+.meta{color:var(--muted);font-size:13px}
+.pick{grid-column:1/-1;margin-top:6px}
+.pick label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.row{display:flex;gap:8px}
+.row input{flex:1}
+.clear{padding:0 12px}
+.state{font-size:12px;margin-top:4px;min-height:16px;color:var(--warn)}
+.state.ok{color:var(--ok)}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.send{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.send .in{max-width:860px;margin:0 auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);max-width:560px;width:calc(100% - 24px);padding:18px}
+dialog::backdrop{background:rgba(10,15,30,.55)}
+dialog h3{font:400 20px var(--display);margin:0 0 8px}
+textarea{width:100%;min-height:110px;font:12px/1.35 ui-monospace,Menlo,monospace;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:flex-end}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Εθνική Μεγάλη Στοά της Ελλάδος · Μεγάλη Καγκελαρία</div>
+  <h1>Ορισμός εκπροσώπων του Μεγάλου Διδασκάλου</h1>
+  <p class="lead">Για κάθε Εγκατάσταση επιλέξτε τον Αδελφό που θα σας εκπροσωπήσει. Μπορείτε να πληκτρολογήσετε όνομα ή να επιλέξετε από τη λίστα. Οι επιλογές σας αποθηκεύονται αυτόματα σε αυτή τη συσκευή· στο τέλος πατήστε «Ολοκλήρωση» για να σταλούν στη Μεγάλη Καγκελαρία.</p>
+
+  <div class="bar" id="bar" hidden>
+    <span class="progress" id="progress"></span>
+    <span class="grow"></span>
+    <input type="search" id="q" placeholder="Αναζήτηση Στοάς ή τόπου…" style="max-width:260px" aria-label="Αναζήτηση">
+  </div>
+  <div id="list"></div>
+  <div class="empty" id="empty" hidden>Η σελίδα δεν περιέχει δεδομένα. Ζητήστε νέο σύνδεσμο από τη Μεγάλη Καγκελαρία.</div>
+</div>
+
+<div class="send" id="sendbar" hidden><div class="in">
+  <span class="meta" id="sendInfo"></span><span class="grow"></span>
+  <button class="btn primary" id="finish">Ολοκλήρωση &amp; αποστολή</button>
+</div></div>
+
+<dialog id="dlg">
+  <h3>Η απόφασή σας είναι έτοιμη</h3>
+  <p class="meta" id="dlgInfo"></p>
+  <p style="margin:6px 0"><b>1.</b> Πατήστε «Email προς Μεγάλη Καγκελαρία» ή «Αντιγραφή κωδικού» και στείλτε τον κωδικό.</p>
+  <textarea id="code" readonly aria-label="Κωδικός απόφασης"></textarea>
+  <div class="actions">
+    <button class="btn" id="copy">Αντιγραφή κωδικού</button>
+    <button class="btn" id="dl">Λήψη αρχείου</button>
+    <a class="btn primary" id="mail" style="text-decoration:none">Email προς Μεγάλη Καγκελαρία</a>
+    <button class="btn" id="close">Κλείσιμο</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* Δεδομένα: ενσωματωμένα στο αρχείο (window.GM_DATA) ή στον σύνδεσμο (#d=…) */
+const $=id=>document.getElementById(id);
+const DAYS=["Κυριακή","Δευτέρα","Τρίτη","Τετάρτη","Πέμπτη","Παρασκευή","Σάββατο"];
+const MONTHS=["Ιανουάριος","Φεβρουάριος","Μάρτιος","Απρίλιος","Μάιος","Ιούνιος","Ιούλιος","Αύγουστος","Σεπτέμβριος","Οκτώβριος","Νοέμβριος","Δεκέμβριος"];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fold=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/ς/g,"σ");
+const toB64=s=>{const b=new TextEncoder().encode(s);let x="";for(let i=0;i<b.length;i+=0x8000)x+=String.fromCharCode(...b.subarray(i,i+0x8000));return btoa(x)};
+const fromB64=s=>new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)));
+const b64u={enc:b=>btoa(String.fromCharCode(...b)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""),
+  dec:s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0))};
+let D=null,picks={},KEY="";
+
+async function loadData(){
+  if(window.GM_DATA)return window.GM_DATA;
+  const m=location.hash.match(/[#&]d=([^&]+)/);if(!m)return null;
+  try{
+    const bytes=b64u.dec(m[1]);
+    if(bytes[0]===0x1f&&bytes[1]===0x8b){
+      const s=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+      return JSON.parse(await new Response(s).text());
+    }
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }catch(e){return null}
+}
+const dayLabel=iso=>{const [y,m,d]=iso.split("-").map(Number);const dt=new Date(y,m-1,d);return {d,w:DAYS[dt.getDay()],full:`${DAYS[dt.getDay()]} ${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`}};
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(picks))}catch(e){}}
+function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>e.hidden=true,2200)}
+
+// Η τιμή του πεδίου είναι το κείμενο που βλέπει ο ΜΔ. Αν ταιριάζει με λίστα → repId, αλλιώς ελεύθερο όνομα.
+function resolve(text){
+  text=text.trim();if(!text)return null;
+  const r=D.reps.find(r=>r.l===text)||D.reps.find(r=>fold(r.l)===fold(text));
+  return r?{rep:r.id,name:r.l}:{rep:"",name:text};
+}
+function stats(){
+  const total=D.visits.length,done=D.visits.filter(v=>picks[v.id]?.name).length;
+  $("progress").innerHTML=`<b>${done}</b> από ${total} Εγκαταστάσεις με εκπρόσωπο`;
+  $("sendInfo").textContent=done===total?"Όλες οι Εγκαταστάσεις έχουν εκπρόσωπο.":`Απομένουν ${total-done} χωρίς εκπρόσωπο — μπορείτε να στείλετε και μερική απόφαση.`;
+}
+function render(){
+  const q=fold($("q").value),box=$("list");
+  const rows=D.visits.filter(v=>!q||fold([v.lodge,v.n,v.loc,v.prov].join(" ")).includes(q));
+  const groups=new Map();rows.forEach(v=>{const k=v.d.slice(0,7);(groups.get(k)||groups.set(k,[]).get(k)).push(v)});
+  box.innerHTML=[...groups].map(([k,items])=>{const [y,m]=k.split("-").map(Number);
+    return `<h2>${MONTHS[m-1]} ${y}<small>${items.length}</small></h2>`+items.map(v=>{
+      const dl=dayLabel(v.d),p=picks[v.id],has=!!p?.name;
+      return `<div class="card${has?" done":""}" data-id="${esc(v.id)}">
+        <div class="date"><div class="d">${dl.d}</div><div class="w">${dl.w.slice(0,3)}</div></div>
+        <div><div class="lodge">${esc(v.lodge)}${v.n?`<span class="no">Αρ. ${esc(v.n)}</span>`:""}</div>
+          <div class="meta">${esc(dl.full)} · ${esc(v.loc||"Τόπος —")}</div>
+          <div class="meta">${esc(v.prov||"")}</div></div>
+        <div class="pick"><label for="p-${esc(v.id)}">Εκπρόσωπος του Μεγάλου Διδασκάλου</label>
+          <div class="row"><input type="text" id="p-${esc(v.id)}" data-v="${esc(v.id)}" list="replist" value="${esc(p?.name||"")}" placeholder="Επιλέξτε ή πληκτρολογήστε όνομα…" autocomplete="off">
+          <button class="btn clear" data-clear="${esc(v.id)}" aria-label="Καθαρισμός" ${has?"":"hidden"}>✕</button></div>
+          <div class="state${has?" ok":""}" id="s-${esc(v.id)}">${has?"✓ Επιλέχθηκε":"Δεν έχει επιλεγεί"}</div></div>
+      </div>`}).join("")}).join("")||`<div class="empty">Καμία Εγκατάσταση δεν ταιριάζει με την αναζήτηση.</div>`;
+  box.querySelectorAll("input[data-v]").forEach(i=>{
+    i.addEventListener("change",()=>setPick(i.dataset.v,i.value));
+  });
+  box.querySelectorAll("[data-clear]").forEach(b=>b.onclick=()=>{setPick(b.dataset.clear,"");render()});
+  stats();
+}
+function setPick(id,text){
+  const r=resolve(text);
+  if(r)picks[id]=r;else delete picks[id];
+  save();stats();
+  const card=document.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+  if(card){card.classList.toggle("done",!!r);const s=card.querySelector(".state");s.classList.toggle("ok",!!r);
+    s.textContent=r?(r.rep?"✓ Επιλέχθηκε":"✓ Επιλέχθηκε (ελεύθερο όνομα — θα επιβεβαιωθεί από τη Γραμματεία)"):"Δεν έχει επιλεγεί";
+    const c=card.querySelector("[data-clear]");if(c)c.hidden=!r}
+}
+function buildCode(){
+  const out={v:1,issued:D.issued,at:new Date().toISOString(),picks:D.visits.filter(v=>picks[v.id]?.name).map(v=>({id:v.id,rep:picks[v.id].rep||"",name:picks[v.id].rep?"":picks[v.id].name}))};
+  return "GMVISIT1:"+toB64(JSON.stringify(out));
+}
+$("finish").onclick=()=>{
+  const code=buildCode(),n=D.visits.filter(v=>picks[v.id]?.name).length;
+  if(!n){toast("Δεν έχετε επιλέξει ακόμη εκπροσώπους");return}
+  $("code").value=code;
+  $("dlgInfo").textContent=`${n} ${n===1?"επιλογή":"επιλογές"} · ${new Date().toLocaleString("el-GR")}`;
+  const subj="Ορισμός εκπροσώπων ΜΔ — "+n+" Εγκαταστάσεις";
+  // Τα πολύ μεγάλα mailto χάνονται από ορισμένα προγράμματα email: τότε ο κωδικός πάει ως συνημμένο αρχείο.
+  const long=code.length>1400;
+  $("mail").href=`mailto:${encodeURIComponent(D.replyTo||"")}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(long?"Επισυνάπτεται το αρχείο με την απόφαση του Μεγάλου Διδασκάλου.\n\n(Παρακαλώ επισυνάψτε το αρχείο που λήψατε με το κουμπί «Λήψη αρχείου».)":"Κωδικός απόφασης:\n\n"+code)}`;
+  $("mail").onclick=()=>{if(long)download()};
+  $("dlg").showModal();
+};
+function download(){
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([$("code").value],{type:"text/plain"}));
+  a.download=`apofasi-md-${new Date().toISOString().slice(0,10)}.gmv.txt`;document.body.appendChild(a);a.click();a.remove();
+}
+$("dl").onclick=download;
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("code").value);toast("Ο κωδικός αντιγράφηκε")}catch(e){$("code").select();toast("Επιλέχθηκε — πατήστε Αντιγραφή")}};
+$("close").onclick=()=>$("dlg").close();
+$("q").addEventListener("input",render);
+
+(async()=>{
+  D=await loadData();
+  if(!D||!Array.isArray(D.visits)||!D.visits.length){$("empty").hidden=false;return}
+  D.reps=D.reps||[];
+  KEY="gmv-picks-"+(D.issued||"");
+  try{picks=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){picks={}}
+  // Προεπιλογή: όσα έχει ήδη ορίσει η Γραμματεία
+  D.visits.forEach(v=>{if(!picks[v.id]&&v.rep){const r=D.reps.find(r=>r.id===v.rep);if(r)picks[v.id]={rep:r.id,name:r.l}}});
+  const dl=document.createElement("datalist");dl.id="replist";
+  dl.innerHTML=D.reps.map(r=>`<option value="${esc(r.l)}">`).join("");document.body.appendChild(dl);
+  $("bar").hidden=false;$("sendbar").hidden=false;
+  render();
+})();
+</script>
+</body>
+</html>
