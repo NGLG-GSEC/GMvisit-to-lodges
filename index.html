@@ -2137,8 +2137,7 @@ $("gFile").onclick=async()=>{
   const data=JSON.stringify(gmPayload()).replace(/</g,"\\u003c");
   const SO="<scr"+"ipt>",SC="</scr"+"ipt>";
   html=html.replace(SO,SO+"window.GM_DATA="+data+";"+SC+"\n"+SO);
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));
-  a.download=`Epilogi-Ekprosopon-MD-${todayISO()}.html`;document.body.appendChild(a);a.click();a.remove();toast("Η σελίδα του ΜΔ αποθηκεύτηκε");
+  await saveFile(`Epilogi-Ekprosopon-MD-${todayISO()}.html`,new Blob([html],{type:"text/html"}),"gErr");
 };
 
 /* Εισαγωγή απόφασης */
